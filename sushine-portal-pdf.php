@@ -36,7 +36,7 @@ class SunshinePortal_PDF_Manager {
         // Shortcode
         add_shortcode('sunshineportal_pdf_manager', array($this, 'pdf_manager_shortcode'));
         
-        // FIXED: Allow uploads for anonymous users by setting proper upload permissions
+        // Allow uploads for anonymous users by setting proper upload permissions
         add_filter('upload_mimes', array($this, 'allow_pdf_uploads'));
         
         // Increase upload limits for PDF files
@@ -400,6 +400,9 @@ class SunshinePortal_PDF_Manager {
     public function create_resource_api($request) {
         $params = $request->get_params();
         
+        // Debug logging to see what's being received
+        error_log('PDF Creation params: ' . print_r($params, true));
+        
         $post_data = array(
             'post_title' => sanitize_text_field($params['title']),
             'post_content' => sanitize_textarea_field($params['description']),
@@ -413,26 +416,80 @@ class SunshinePortal_PDF_Manager {
             return $post_id;
         }
         
-        // Set taxonomies
-        if (!empty($params['category'])) {
-            wp_set_post_terms($post_id, $params['category'], 'pdf_category');
+        // FIXED: Convert slugs to term IDs before setting terms
+        if (!empty($params['category']) && is_array($params['category'])) {
+            $term_ids = array();
+            foreach ($params['category'] as $slug) {
+                $term = get_term_by('slug', sanitize_text_field($slug), 'pdf_category');
+                if ($term) {
+                    $term_ids[] = $term->term_id;
+                }
+            }
+            if (!empty($term_ids)) {
+                $result = wp_set_post_terms($post_id, $term_ids, 'pdf_category');
+                error_log('Category assignment result: ' . print_r($result, true));
+            }
         }
-        if (!empty($params['type'])) {
-            wp_set_post_terms($post_id, $params['type'], 'pdf_type');
+        
+        if (!empty($params['type']) && is_array($params['type'])) {
+            $term_ids = array();
+            foreach ($params['type'] as $slug) {
+                $term = get_term_by('slug', sanitize_text_field($slug), 'pdf_type');
+                if ($term) {
+                    $term_ids[] = $term->term_id;
+                }
+            }
+            if (!empty($term_ids)) {
+                $result = wp_set_post_terms($post_id, $term_ids, 'pdf_type');
+                error_log('Type assignment result: ' . print_r($result, true));
+            }
         }
-        if (!empty($params['department'])) {
-            wp_set_post_terms($post_id, $params['department'], 'pdf_department');
+        
+        if (!empty($params['department']) && is_array($params['department'])) {
+            $term_ids = array();
+            foreach ($params['department'] as $slug) {
+                $term = get_term_by('slug', sanitize_text_field($slug), 'pdf_department');
+                if ($term) {
+                    $term_ids[] = $term->term_id;
+                }
+            }
+            if (!empty($term_ids)) {
+                $result = wp_set_post_terms($post_id, $term_ids, 'pdf_department');
+                error_log('Department assignment result: ' . print_r($result, true));
+            }
         }
         
         // Handle file upload if provided
         if (!empty($params['pdf_file_id'])) {
             update_post_meta($post_id, '_pdf_file_id', intval($params['pdf_file_id']));
+            
+            // Get file info and save additional meta
+            $file_path = get_attached_file(intval($params['pdf_file_id']));
+            if ($file_path && file_exists($file_path)) {
+                $file_size = size_format(filesize($file_path));
+                update_post_meta($post_id, '_file_size', $file_size);
+                update_post_meta($post_id, '_upload_date', current_time('mysql'));
+            }
         }
+        
+        // Initialize download count
+        update_post_meta($post_id, '_download_count', 0);
+        
+        // Get the assigned terms for confirmation
+        $assigned_categories = wp_get_post_terms($post_id, 'pdf_category', array('fields' => 'slugs'));
+        $assigned_types = wp_get_post_terms($post_id, 'pdf_type', array('fields' => 'slugs'));
+        $assigned_departments = wp_get_post_terms($post_id, 'pdf_department', array('fields' => 'slugs'));
         
         return rest_ensure_response(array(
             'success' => true,
             'post_id' => $post_id,
-            'message' => 'PDF resource created successfully'
+            'message' => 'PDF resource created successfully',
+            'debug' => array(
+                'received_params' => $params,
+                'assigned_categories' => $assigned_categories,
+                'assigned_types' => $assigned_types,
+                'assigned_departments' => $assigned_departments
+            )
         ));
     }
     

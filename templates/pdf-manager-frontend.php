@@ -404,4 +404,105 @@ jQuery(document).ready(function($) {
         });
     }
 });
+
+// FIXED: Add the missing addPDF function for form submission with debugging
+function addPDF(event) {
+    event.preventDefault();
+    
+    console.log('Form submission started');
+    
+    // Collect form data
+    var formData = new FormData(event.target);
+    
+    // Check if PDF file was selected
+    var pdfFileId = formData.get('pdf_file_id');
+    if (!pdfFileId) {
+        alert('<?php _e('Please select a PDF file before submitting.', 'sunshineportal-pdf'); ?>');
+        return;
+    }
+    
+    // Prepare data for API
+    var pdfData = {
+        title: formData.get('title'),
+        description: formData.get('description'),
+        category: [formData.get('category')],    // Convert to array for API
+        type: [formData.get('type')],           // Convert to array for API  
+        department: [formData.get('department')], // Convert to array for API
+        pdf_file_id: pdfFileId
+    };
+    
+    // Debug: Log the data being sent
+    console.log('Data being sent to API:', pdfData);
+    console.log('API URL:', pdfManager.apiUrl + 'resources');
+    console.log('Nonce:', pdfManager.nonce);
+    
+    // Show loading state
+    var submitBtn = event.target.querySelector('.add-pdf-btn');
+    var originalText = submitBtn.textContent;
+    submitBtn.textContent = '<?php _e('Creating PDF Resource...', 'sunshineportal-pdf'); ?>';
+    submitBtn.disabled = true;
+    
+    // Submit to API
+    jQuery.ajax({
+        url: pdfManager.apiUrl + 'resources',
+        type: 'POST',
+        data: JSON.stringify(pdfData),
+        contentType: 'application/json',
+        headers: {
+            'X-WP-Nonce': pdfManager.nonce
+        },
+        beforeSend: function() {
+            console.log('AJAX request starting...');
+        },
+        success: function(response) {
+            console.log('API Response:', response);
+            if (response.success) {
+                alert('<?php _e('PDF resource added successfully!', 'sunshineportal-pdf'); ?>');
+                
+                // Reset the form
+                event.target.reset();
+                
+                // Clear file selection
+                jQuery('#pdfFileId').val('');
+                jQuery('#pdfPreview').html('');
+                jQuery('#removePdfBtn').hide();
+                
+                // Clear direct upload input if it exists
+                var directUpload = document.getElementById('directPdfUpload');
+                if (directUpload) {
+                    directUpload.value = '';
+                }
+                
+                // Refresh the PDF list if the manager instance exists
+                if (typeof pdfManagerInstance !== 'undefined' && pdfManagerInstance.loadPDFs) {
+                    pdfManagerInstance.loadPDFs();
+                }
+            } else {
+                alert('<?php _e('Failed to create PDF resource: ', 'sunshineportal-pdf'); ?>' + (response.message || 'Unknown error'));
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error Details:');
+            console.error('Status:', status);
+            console.error('Error:', error);
+            console.error('Response Text:', xhr.responseText);
+            console.error('Status Code:', xhr.status);
+            
+            try {
+                var errorResponse = JSON.parse(xhr.responseText);
+                console.error('Parsed Error Response:', errorResponse);
+            } catch(e) {
+                console.error('Could not parse error response');
+            }
+            
+            alert('<?php _e('Failed to create PDF resource. Please try again.', 'sunshineportal-pdf'); ?>');
+        },
+        complete: function() {
+            console.log('AJAX request completed');
+            // Reset button state
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
+    });
+}
 </script>
