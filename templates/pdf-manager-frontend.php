@@ -40,8 +40,7 @@ if (!defined('ABSPATH')) {
         <div class="step-content" id="content-step-1" style="display: block;">
             <div class="welcome-card">
                 <h3><?php _e('PDF Resource Manager', 'sunshineportal-pdf'); ?></h3>
-                <p><?php _e('Welcome to the Community Needs Assessment (CNA) Web Tool, developed by the University of Florida’s Anita Zucker Center for Excellence in Early Childhood Studies, Early Childhood Policy Research Group (ECPRG). '); ?></p>
-                
+                <p>Welcome to the Community Needs Assessment (CNA) Web Tool, developed by the University of Florida’s Anita Zucker Center for Excellence in Early Childhood Studies, Early Childhood Policy Research Group (ECPRG). This tool provides a standardized template to help Florida’s Early Learning Coalitions (ELCs) prepare their annual Community Needs Assessment. These pre-populated reports are designed to meet Florida’s statutory requirements while also incorporating indices and insights from program data and ECPRG's research.</p>
                 <div class="welcome-features">
                     <div class="feature-item">
                         <span class="dashicons dashicons-search"></span>
@@ -90,17 +89,17 @@ if (!defined('ABSPATH')) {
 
                 <div class="filters-container">
                     <div class="filter-row">
-                        <!-- Category Filter -->
+                        <!-- ELC Filter -->
                         <div class="filter-group">
-                            <label><?php _e('Category', 'sunshineportal-pdf'); ?></label>
+                            <label><?php _e('elc', 'sunshineportal-pdf'); ?></label>
                             <div class="filter-dropdown">
                                 <div class="dropdown-button" onclick="toggleDropdown('category')">
-                                    <span id="categoryLabel"><?php _e('All Categories', 'sunshineportal-pdf'); ?></span>
+                                    <span id="categoryLabel"><?php _e('All ELCs', 'sunshineportal-pdf'); ?></span>
                                     <span class="dropdown-arrow">▼</span>
                                 </div>
                                 <div class="dropdown-content" id="categoryDropdown">
                                     <div class="dropdown-header">
-                                        <span><?php _e('Category', 'sunshineportal-pdf'); ?></span>
+                                        <span><?php _e('ELC', 'sunshineportal-pdf'); ?></span>
                                         <a href="#" class="clear-filter" onclick="clearFilter('category')"><?php _e('Clear', 'sunshineportal-pdf'); ?></a>
                                     </div>
                                     <div class="filter-options">
@@ -110,17 +109,17 @@ if (!defined('ABSPATH')) {
                             </div>
                         </div>
 
-                        <!-- Type Filter -->
+                        <!-- County Filter -->
                         <div class="filter-group">
-                            <label><?php _e('Type', 'sunshineportal-pdf'); ?></label>
+                            <label><?php _e('County', 'sunshineportal-pdf'); ?></label>
                             <div class="filter-dropdown">
                                 <div class="dropdown-button" onclick="toggleDropdown('type')">
-                                    <span id="typeLabel"><?php _e('All Types', 'sunshineportal-pdf'); ?></span>
+                                    <span id="typeLabel"><?php _e('All Counties', 'sunshineportal-pdf'); ?></span>
                                     <span class="dropdown-arrow">▼</span>
                                 </div>
                                 <div class="dropdown-content" id="typeDropdown">
                                     <div class="dropdown-header">
-                                        <span><?php _e('Type', 'sunshineportal-pdf'); ?></span>
+                                        <span><?php _e('County', 'sunshineportal-pdf'); ?></span>
                                         <a href="#" class="clear-filter" onclick="clearFilter('type')"><?php _e('Clear', 'sunshineportal-pdf'); ?></a>
                                     </div>
                                     <div class="filter-options">
@@ -130,17 +129,17 @@ if (!defined('ABSPATH')) {
                             </div>
                         </div>
 
-                        <!-- Department Filter -->
+                        <!-- Year Filter -->
                         <div class="filter-group">
-                            <label><?php _e('Department', 'sunshineportal-pdf'); ?></label>
+                            <label><?php _e('Year', 'sunshineportal-pdf'); ?></label>
                             <div class="filter-dropdown">
                                 <div class="dropdown-button" onclick="toggleDropdown('department')">
-                                    <span id="departmentLabel"><?php _e('All Departments', 'sunshineportal-pdf'); ?></span>
+                                    <span id="departmentLabel"><?php _e('All Years', 'sunshineportal-pdf'); ?></span>
                                     <span class="dropdown-arrow">▼</span>
                                 </div>
                                 <div class="dropdown-content" id="departmentDropdown">
                                     <div class="dropdown-header">
-                                        <span><?php _e('Department', 'sunshineportal-pdf'); ?></span>
+                                        <span><?php _e('Year', 'sunshineportal-pdf'); ?></span>
                                         <a href="#" class="clear-filter" onclick="clearFilter('department')"><?php _e('Clear', 'sunshineportal-pdf'); ?></a>
                                     </div>
                                     <div class="filter-options">
