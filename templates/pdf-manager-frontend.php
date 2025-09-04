@@ -11,498 +11,420 @@ if (!defined('ABSPATH')) {
 ?>
 
 <div class="pdf-resource-manager">
-    <!-- Admin Panel -->
-    <button class="admin-toggle" onclick="toggleAdmin()">
-        <?php _e('Toggle Admin Panel', 'sunshineportal-pdf'); ?>
-    </button>
-    
-    <div class="admin-panel" id="adminPanel" style="display: none;">
-        <h3><?php _e('Add New PDF Resource', 'sunshineportal-pdf'); ?></h3>
-        <form class="admin-form" onsubmit="addPDF(event)">
-            <div class="form-group">
-                <label><?php _e('Title:', 'sunshineportal-pdf'); ?></label>
-                <input type="text" name="title" required>
+    <!-- Progress Steps -->
+    <div class="steps-container">
+        <div class="steps-wrapper">
+            <div class="step" id="step-1" data-step="1">
+                <div class="step-number">1</div>
+                <div class="step-title"><?php _e('Start', 'sunshineportal-pdf'); ?></div>
             </div>
-            
-            <div class="form-group">
-                <label><?php _e('Category:', 'sunshineportal-pdf'); ?></label>
-                <select name="category" required>
-                    <option value=""><?php _e('Select Category', 'sunshineportal-pdf'); ?></option>
-                    <?php
-                    $categories = get_terms(array(
-                        'taxonomy' => 'pdf_category', 
-                        'hide_empty' => false
-                    ));
-                    foreach ($categories as $category) {
-                        echo '<option value="' . esc_attr($category->slug) . '">' . esc_html($category->name) . '</option>';
-                    }
-                    ?>
-                </select>
+            <div class="step" id="step-2" data-step="2">
+                <div class="step-number">2</div>
+                <div class="step-title"><?php _e('Filter Resources', 'sunshineportal-pdf'); ?></div>
             </div>
-            
-            <div class="form-group">
-                <label><?php _e('Type:', 'sunshineportal-pdf'); ?></label>
-                <select name="type" required>
-                    <option value=""><?php _e('Select Type', 'sunshineportal-pdf'); ?></option>
-                    <?php
-                    $types = get_terms(array(
-                        'taxonomy' => 'pdf_type', 
-                        'hide_empty' => false
-                    ));
-                    foreach ($types as $type) {
-                        echo '<option value="' . esc_attr($type->slug) . '">' . esc_html($type->name) . '</option>';
-                    }
-                    ?>
-                </select>
+            <div class="step" id="step-3" data-step="3">
+                <div class="step-number">3</div>
+                <div class="step-title"><?php _e('Browse & Download', 'sunshineportal-pdf'); ?></div>
             </div>
-            
-            <div class="form-group">
-                <label><?php _e('Department:', 'sunshineportal-pdf'); ?></label>
-                <select name="department" required>
-                    <option value=""><?php _e('Select Department', 'sunshineportal-pdf'); ?></option>
-                    <?php
-                    $departments = get_terms(array(
-                        'taxonomy' => 'pdf_department', 
-                        'hide_empty' => false
-                    ));
-                    foreach ($departments as $department) {
-                        echo '<option value="' . esc_attr($department->slug) . '">' . esc_html($department->name) . '</option>';
-                    }
-                    ?>
-                </select>
+            <div class="step" id="step-4" data-step="4">
+                <div class="step-number">4</div>
+                <div class="step-title"><?php _e('Upload Resources', 'sunshineportal-pdf'); ?></div>
             </div>
-            
-            <div class="form-group">
-                <label><?php _e('Description:', 'sunshineportal-pdf'); ?></label>
-                <textarea name="description" rows="3" placeholder="<?php _e('Brief description of the PDF resource...', 'sunshineportal-pdf'); ?>"></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label><?php _e('PDF File:', 'sunshineportal-pdf'); ?></label>
-                <input type="hidden" name="pdf_file_id" id="pdfFileId">
-                
-                <div class="pdf-upload-controls">
-                    <?php if (is_user_logged_in()): ?>
-                        <!-- Logged-in users: Use WordPress Media Library -->
-                        <button type="button" class="upload-pdf-btn">
-                            <?php _e('Choose from Media Library', 'sunshineportal-pdf'); ?>
-                        </button>
-                        <button type="button" class="remove-pdf-btn" id="removePdfBtn" style="display: none; margin-left: 10px; background: #dc3545; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer;">
-                            <?php _e('Remove File', 'sunshineportal-pdf'); ?>
-                        </button>
-                    <?php else: ?>
-                        <!-- Anonymous users: Direct file upload -->
-                        <input type="file" 
-                               id="directPdfUpload" 
-                               accept=".pdf,application/pdf" 
-                               style="display: none;">
-                        <button type="button" class="upload-pdf-btn" onclick="document.getElementById('directPdfUpload').click();">
-                            <?php _e('Choose PDF File', 'sunshineportal-pdf'); ?>
-                        </button>
-                        <button type="button" class="remove-pdf-btn" id="removePdfBtn" style="display: none; margin-left: 10px; background: #dc3545; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer;">
-                            <?php _e('Remove File', 'sunshineportal-pdf'); ?>
-                        </button>
-                    <?php endif; ?>
-                </div>
-                
-                <div id="pdfPreview"></div>
-                
-                <p class="description" style="margin-top: 10px; font-size: 13px; color: #666;">
-                    <?php if (is_user_logged_in()): ?>
-                        <?php _e('Choose a PDF from your media library or upload a new one.', 'sunshineportal-pdf'); ?>
-                    <?php else: ?>
-                        <?php _e('Select a PDF file from your computer (max 10MB). Only PDF files are allowed.', 'sunshineportal-pdf'); ?>
-                    <?php endif; ?>
-                </p>
-            </div>
-            
-            <button type="submit" class="add-pdf-btn">
-                <?php _e('Add PDF Resource', 'sunshineportal-pdf'); ?>
-            </button>
-        </form>
-    </div>
-
-    <!-- Filters Section -->
-    <div class="filters-container">
-        <div class="filter-row">
-            <!-- Category Filter -->
-            <div class="filter-group">
-                <div class="filter-dropdown">
-                    <div class="dropdown-button" onclick="toggleDropdown('category')">
-                        <span id="categoryLabel"><?php _e('Category', 'sunshineportal-pdf'); ?></span>
-                        <span class="dropdown-arrow">▼</span>
-                    </div>
-                    <div class="dropdown-content" id="categoryDropdown">
-                        <div class="dropdown-header">
-                            <span><?php _e('Category', 'sunshineportal-pdf'); ?></span>
-                            <a href="#" class="clear-filter" onclick="clearFilter('category')"><?php _e('Clear', 'sunshineportal-pdf'); ?></a>
-                        </div>
-                        <div class="filter-options">
-                            <!-- Options will be populated by JavaScript -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Type Filter -->
-            <div class="filter-group">
-                <div class="filter-dropdown">
-                    <div class="dropdown-button" onclick="toggleDropdown('type')">
-                        <span id="typeLabel"><?php _e('Type', 'sunshineportal-pdf'); ?></span>
-                        <span class="dropdown-arrow">▼</span>
-                    </div>
-                    <div class="dropdown-content" id="typeDropdown">
-                        <div class="dropdown-header">
-                            <span><?php _e('Type', 'sunshineportal-pdf'); ?></span>
-                            <a href="#" class="clear-filter" onclick="clearFilter('type')"><?php _e('Clear', 'sunshineportal-pdf'); ?></a>
-                        </div>
-                        <div class="filter-options">
-                            <!-- Options will be populated by JavaScript -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Department Filter -->
-            <div class="filter-group">
-                <div class="filter-dropdown">
-                    <div class="dropdown-button" onclick="toggleDropdown('department')">
-                        <span id="departmentLabel"><?php _e('Department', 'sunshineportal-pdf'); ?></span>
-                        <span class="dropdown-arrow">▼</span>
-                    </div>
-                    <div class="dropdown-content" id="departmentDropdown">
-                        <div class="dropdown-header">
-                            <span><?php _e('Department', 'sunshineportal-pdf'); ?></span>
-                            <a href="#" class="clear-filter" onclick="clearFilter('department')"><?php _e('Clear', 'sunshineportal-pdf'); ?></a>
-                        </div>
-                        <div class="filter-options">
-                            <!-- Options will be populated by JavaScript -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Search Input -->
-        <div class="search-container">
-            <input type="text" 
-                   class="search-input" 
-                   placeholder="<?php _e('Search PDFs...', 'sunshineportal-pdf'); ?>"
-                   aria-label="<?php _e('Search PDF resources', 'sunshineportal-pdf'); ?>">
         </div>
     </div>
 
-    <!-- Results Section -->
-    <div class="results-container">
-        <div class="results-header">
-            <div class="results-count" id="resultsCount">
-                <?php _e('Loading...', 'sunshineportal-pdf'); ?>
-            </div>
-            <select class="sort-dropdown" aria-label="<?php _e('Sort results', 'sunshineportal-pdf'); ?>">
-                <option value="date-desc"><?php _e('Newest first', 'sunshineportal-pdf'); ?></option>
-                <option value="date-asc"><?php _e('Oldest first', 'sunshineportal-pdf'); ?></option>
-                <option value="title-asc"><?php _e('Title A-Z', 'sunshineportal-pdf'); ?></option>
-                <option value="title-desc"><?php _e('Title Z-A', 'sunshineportal-pdf'); ?></option>
-                <option value="downloads-desc"><?php _e('Most downloaded', 'sunshineportal-pdf'); ?></option>
-            </select>
-        </div>
+    <!-- Step Content Container -->
+    <div class="step-content-container">
         
-        <div class="pdf-grid" id="pdfGrid">
-            <!-- PDF cards will be inserted here by JavaScript -->
-            <div class="loading">
-                <?php _e('Loading PDF resources...', 'sunshineportal-pdf'); ?>
+        <!-- Step 1: Start/Welcome -->
+        <div class="step-content" id="content-step-1" style="display: block;">
+            <div class="welcome-card">
+                <h3><?php _e('PDF Resource Manager', 'sunshineportal-pdf'); ?></h3>
+                <p><?php _e('Welcome to the Community Needs Assessment (CNA) Web Tool, developed by the University of Florida’s Anita Zucker Center for Excellence in Early Childhood Studies, Early Childhood Policy Research Group (ECPRG). '); ?></p>
+                
+                <div class="welcome-features">
+                    <div class="feature-item">
+                        <span class="dashicons dashicons-search"></span>
+                        <div>
+                            <h4><?php _e('Search & Filter', 'sunshineportal-pdf'); ?></h4>
+                            <p><?php _e('Easily find resources by category, type, department, or search terms.', 'sunshineportal-pdf'); ?></p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <span class="dashicons dashicons-download"></span>
+                        <div>
+                            <h4><?php _e('Download & Preview', 'sunshineportal-pdf'); ?></h4>
+                            <p><?php _e('Preview PDFs before downloading and track download statistics.', 'sunshineportal-pdf'); ?></p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <span class="dashicons dashicons-upload"></span>
+                        <div>
+                            <h4><?php _e('Upload & Share', 'sunshineportal-pdf'); ?></h4>
+                            <p><?php _e('Add new PDF resources and organize them for others to use.', 'sunshineportal-pdf'); ?></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="welcome-instructions">
+                    <h4><?php _e('Getting Started:', 'sunshineportal-pdf'); ?></h4>
+                    <ol>
+                        <li><?php _e('Click "Get Started" to begin browsing resources', 'sunshineportal-pdf'); ?></li>
+                        <li><?php _e('Use filters to narrow down the resources you need', 'sunshineportal-pdf'); ?></li>
+                        <li><?php _e('Browse and download the PDFs that match your needs', 'sunshineportal-pdf'); ?></li>
+                        <li><?php _e('Upload new resources to share with others', 'sunshineportal-pdf'); ?></li>
+                    </ol>
+                </div>
+
+                <button class="step-button step-button-primary" onclick="goToStep(2)">
+                    <?php _e('Get Started', 'sunshineportal-pdf'); ?>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: Filters -->
+        <div class="step-content" id="content-step-2" style="display: none;">
+            <div class="filter-card">
+                <h3><?php _e('Filter PDF Resources', 'sunshineportal-pdf'); ?></h3>
+                <p><?php _e('Use the filters below to find the specific resources you need. You can combine multiple filters or leave them all empty to see all available resources.', 'sunshineportal-pdf'); ?></p>
+
+                <div class="filters-container">
+                    <div class="filter-row">
+                        <!-- Category Filter -->
+                        <div class="filter-group">
+                            <label><?php _e('Category', 'sunshineportal-pdf'); ?></label>
+                            <div class="filter-dropdown">
+                                <div class="dropdown-button" onclick="toggleDropdown('category')">
+                                    <span id="categoryLabel"><?php _e('All Categories', 'sunshineportal-pdf'); ?></span>
+                                    <span class="dropdown-arrow">▼</span>
+                                </div>
+                                <div class="dropdown-content" id="categoryDropdown">
+                                    <div class="dropdown-header">
+                                        <span><?php _e('Category', 'sunshineportal-pdf'); ?></span>
+                                        <a href="#" class="clear-filter" onclick="clearFilter('category')"><?php _e('Clear', 'sunshineportal-pdf'); ?></a>
+                                    </div>
+                                    <div class="filter-options">
+                                        <!-- Options will be populated by JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Type Filter -->
+                        <div class="filter-group">
+                            <label><?php _e('Type', 'sunshineportal-pdf'); ?></label>
+                            <div class="filter-dropdown">
+                                <div class="dropdown-button" onclick="toggleDropdown('type')">
+                                    <span id="typeLabel"><?php _e('All Types', 'sunshineportal-pdf'); ?></span>
+                                    <span class="dropdown-arrow">▼</span>
+                                </div>
+                                <div class="dropdown-content" id="typeDropdown">
+                                    <div class="dropdown-header">
+                                        <span><?php _e('Type', 'sunshineportal-pdf'); ?></span>
+                                        <a href="#" class="clear-filter" onclick="clearFilter('type')"><?php _e('Clear', 'sunshineportal-pdf'); ?></a>
+                                    </div>
+                                    <div class="filter-options">
+                                        <!-- Options will be populated by JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Department Filter -->
+                        <div class="filter-group">
+                            <label><?php _e('Department', 'sunshineportal-pdf'); ?></label>
+                            <div class="filter-dropdown">
+                                <div class="dropdown-button" onclick="toggleDropdown('department')">
+                                    <span id="departmentLabel"><?php _e('All Departments', 'sunshineportal-pdf'); ?></span>
+                                    <span class="dropdown-arrow">▼</span>
+                                </div>
+                                <div class="dropdown-content" id="departmentDropdown">
+                                    <div class="dropdown-header">
+                                        <span><?php _e('Department', 'sunshineportal-pdf'); ?></span>
+                                        <a href="#" class="clear-filter" onclick="clearFilter('department')"><?php _e('Clear', 'sunshineportal-pdf'); ?></a>
+                                    </div>
+                                    <div class="filter-options">
+                                        <!-- Options will be populated by JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search Input -->
+                    <div class="search-container">
+                        <label><?php _e('Search', 'sunshineportal-pdf'); ?></label>
+                        <input type="text" 
+                               class="search-input" 
+                               placeholder="<?php _e('Search PDFs by title or description...', 'sunshineportal-pdf'); ?>"
+                               aria-label="<?php _e('Search PDF resources', 'sunshineportal-pdf'); ?>">
+                    </div>
+                </div>
+
+                <div class="filter-actions">
+                    <button class="step-button" onclick="goToStep(1)">
+                        <?php _e('Back', 'sunshineportal-pdf'); ?>
+                    </button>
+                    <button class="step-button step-button-primary" onclick="goToStep(3)">
+                        <?php _e('Browse Resources', 'sunshineportal-pdf'); ?>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Browse & Download -->
+        <div class="step-content" id="content-step-3" style="display: none;">
+            <div class="browse-card">
+                <h3><?php _e('Browse & Download PDFs', 'sunshineportal-pdf'); ?></h3>
+                <p><?php _e('Review the filtered results below. Click on any PDF to preview it, or use the download button to save it to your device.', 'sunshineportal-pdf'); ?></p>
+
+                <!-- Applied Filters Summary -->
+                <div id="appliedFilters" class="applied-filters" style="display: none;">
+                    <h4><?php _e('Applied Filters:', 'sunshineportal-pdf'); ?></h4>
+                    <div id="filterTags"></div>
+                    <button class="clear-all-filters" onclick="clearAllFilters()"><?php _e('Clear All Filters', 'sunshineportal-pdf'); ?></button>
+                </div>
+
+                <!-- Results Section -->
+                <div class="results-container">
+                    <div class="results-header">
+                        <div class="results-count" id="resultsCount">
+                            <?php _e('Loading...', 'sunshineportal-pdf'); ?>
+                        </div>
+                        <select class="sort-dropdown" aria-label="<?php _e('Sort results', 'sunshineportal-pdf'); ?>">
+                            <option value="date-desc"><?php _e('Newest first', 'sunshineportal-pdf'); ?></option>
+                            <option value="date-asc"><?php _e('Oldest first', 'sunshineportal-pdf'); ?></option>
+                            <option value="title-asc"><?php _e('Title A-Z', 'sunshineportal-pdf'); ?></option>
+                            <option value="title-desc"><?php _e('Title Z-A', 'sunshineportal-pdf'); ?></option>
+                            <option value="downloads-desc"><?php _e('Most downloaded', 'sunshineportal-pdf'); ?></option>
+                        </select>
+                    </div>
+                    
+                    <div class="pdf-grid" id="pdfGrid">
+                        <!-- PDF cards will be inserted here by JavaScript -->
+                        <div class="loading">
+                            <?php _e('Loading PDF resources...', 'sunshineportal-pdf'); ?>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="browse-actions">
+                    <button class="step-button" onclick="goToStep(2)">
+                        <?php _e('Back to Filters', 'sunshineportal-pdf'); ?>
+                    </button>
+                    <button class="step-button step-button-primary" onclick="goToStep(4)">
+                        <?php _e('Upload New Resource', 'sunshineportal-pdf'); ?>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Upload -->
+        <div class="step-content" id="content-step-4" style="display: none;">
+            <div class="upload-card">
+                <h3><?php _e('Upload New PDF Resource', 'sunshineportal-pdf'); ?></h3>
+                <p><?php _e('Add a new PDF resource to share with others. Fill out the form below and upload your PDF file.', 'sunshineportal-pdf'); ?></p>
+
+                <form class="upload-form" onsubmit="addPDF(event)">
+                    <div class="form-group">
+                        <label><?php _e('Title *', 'sunshineportal-pdf'); ?></label>
+                        <input type="text" name="title" required placeholder="<?php _e('Enter a descriptive title for your PDF', 'sunshineportal-pdf'); ?>">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><?php _e('Category *', 'sunshineportal-pdf'); ?></label>
+                            <select name="category" required>
+                                <option value=""><?php _e('Select Category', 'sunshineportal-pdf'); ?></option>
+                                <?php
+                                $categories = get_terms(array(
+                                    'taxonomy' => 'pdf_category', 
+                                    'hide_empty' => false
+                                ));
+                                foreach ($categories as $category) {
+                                    echo '<option value="' . esc_attr($category->slug) . '">' . esc_html($category->name) . '</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label><?php _e('Type *', 'sunshineportal-pdf'); ?></label>
+                            <select name="type" required>
+                                <option value=""><?php _e('Select Type', 'sunshineportal-pdf'); ?></option>
+                                <?php
+                                $types = get_terms(array(
+                                    'taxonomy' => 'pdf_type', 
+                                    'hide_empty' => false
+                                ));
+                                foreach ($types as $type) {
+                                    echo '<option value="' . esc_attr($type->slug) . '">' . esc_html($type->name) . '</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label><?php _e('Department *', 'sunshineportal-pdf'); ?></label>
+                            <select name="department" required>
+                                <option value=""><?php _e('Select Department', 'sunshineportal-pdf'); ?></option>
+                                <?php
+                                $departments = get_terms(array(
+                                    'taxonomy' => 'pdf_department', 
+                                    'hide_empty' => false
+                                ));
+                                foreach ($departments as $department) {
+                                    echo '<option value="' . esc_attr($department->slug) . '">' . esc_html($department->name) . '</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><?php _e('Description', 'sunshineportal-pdf'); ?></label>
+                        <textarea name="description" rows="3" placeholder="<?php _e('Brief description of the PDF resource (optional)', 'sunshineportal-pdf'); ?>"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><?php _e('PDF File *', 'sunshineportal-pdf'); ?></label>
+                        <input type="hidden" name="pdf_file_id" id="pdfFileId">
+                        
+                        <div class="pdf-upload-controls">
+                            <input type="file" 
+                                   id="directPdfUpload" 
+                                   accept=".pdf,application/pdf" 
+                                   style="display: none;">
+                            <button type="button" class="upload-pdf-btn" onclick="document.getElementById('directPdfUpload').click();">
+                                <?php _e('Choose PDF File', 'sunshineportal-pdf'); ?>
+                            </button>
+                            <button type="button" class="remove-pdf-btn" id="removePdfBtn" style="display: none;">
+                                <?php _e('Remove File', 'sunshineportal-pdf'); ?>
+                            </button>
+                        </div>
+                        
+                        <div id="pdfPreview"></div>
+                        
+                        <p class="description">
+                            <?php _e('Select a PDF file from your computer (max 10MB). Only PDF files are allowed.', 'sunshineportal-pdf'); ?>
+                        </p>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="step-button" onclick="goToStep(3)">
+                            <?php _e('Back to Browse', 'sunshineportal-pdf'); ?>
+                        </button>
+                        <button type="submit" class="step-button step-button-primary add-pdf-btn">
+                            <?php _e('Upload PDF Resource', 'sunshineportal-pdf'); ?>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help/Instructions Button -->
+    <div class="help-button-container">
+        <button class="help-button" onclick="toggleInstructions()">
+            <span class="dashicons dashicons-editor-help"></span>
+            <?php _e('Instructions', 'sunshineportal-pdf'); ?>
+        </button>
+    </div>
+
+    <!-- Instructions Modal -->
+    <div id="instructionsModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><?php _e('How to Use the PDF Resource Manager', 'sunshineportal-pdf'); ?></h3>
+                <span class="close-modal" onclick="toggleInstructions()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="instruction-step">
+                    <h4><?php _e('Step 1: Get Started', 'sunshineportal-pdf'); ?></h4>
+                    <p><?php _e('Read the welcome information and click "Get Started" to begin browsing resources.', 'sunshineportal-pdf'); ?></p>
+                </div>
+                
+                <div class="instruction-step">
+                    <h4><?php _e('Step 2: Filter Resources', 'sunshineportal-pdf'); ?></h4>
+                    <p><?php _e('Use the dropdown filters to narrow down resources by category, type, or department. You can also search by keywords. Leave filters empty to see all resources.', 'sunshineportal-pdf'); ?></p>
+                </div>
+                
+                <div class="instruction-step">
+                    <h4><?php _e('Step 3: Browse & Download', 'sunshineportal-pdf'); ?></h4>
+                    <p><?php _e('Review the filtered results and click on PDFs to preview them. Use the download button to save resources to your device. You can sort results by date, title, or popularity.', 'sunshineportal-pdf'); ?></p>
+                </div>
+                
+                <div class="instruction-step">
+                    <h4><?php _e('Step 4: Upload New Resources', 'sunshineportal-pdf'); ?></h4>
+                    <p><?php _e('Add new PDF resources by filling out the upload form. Choose appropriate categories, types, and departments to help others find your resources easily.', 'sunshineportal-pdf'); ?></p>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-// Initialize file upload for frontend admin panel
-jQuery(document).ready(function($) {
-    // Only initialize if admin panel is present
-    if ($('#adminPanel').length > 0) {
-        var mediaUploader;
-        var isLoggedIn = <?php echo is_user_logged_in() ? 'true' : 'false'; ?>;
-        
-        // Handle WordPress Media Library (logged-in users)
-        if (isLoggedIn) {
-            $(document).on('click', '.upload-pdf-btn', function(e) {
-                e.preventDefault();
-                
-                if (mediaUploader) {
-                    mediaUploader.open();
-                    return;
-                }
-                
-                mediaUploader = wp.media({
-                    title: '<?php _e('Choose PDF File', 'sunshineportal-pdf'); ?>',
-                    button: {
-                        text: '<?php _e('Use this PDF', 'sunshineportal-pdf'); ?>'
-                    },
-                    library: {
-                        type: 'application/pdf'
-                    },
-                    multiple: false
-                });
-                
-                mediaUploader.on('select', function() {
-                    var attachment = mediaUploader.state().get('selection').first().toJSON();
-                    
-                    // Update the hidden field
-                    $('#pdfFileId').val(attachment.id);
-                    
-                    // Update the preview with file info
-                    $('#pdfPreview').html(
-                        '<div style="background: #f0f8ff; padding: 10px; border-radius: 4px; margin-top: 10px; border-left: 4px solid #007cba;">' +
-                        '<p style="margin: 0;"><strong><?php _e('Selected File:', 'sunshineportal-pdf'); ?></strong></p>' +
-                        '<p style="margin: 5px 0 0 0;"><span class="dashicons dashicons-media-document" style="color: #dc3545;"></span> ' + 
-                        '<a href="' + attachment.url + '" target="_blank" style="text-decoration: none;">' + attachment.filename + '</a></p>' +
-                        '<p style="margin: 5px 0 0 0; font-size: 13px; color: #666;">ID: ' + attachment.id + 
-                        (attachment.filesizeHumanReadable ? ' | Size: ' + attachment.filesizeHumanReadable : '') + '</p>' +
-                        '</div>'
-                    );
-                    
-                    // Show the remove button
-                    $('#removePdfBtn').show();
-                    
-                    // Close the media uploader window
-                    mediaUploader.close();
-                    
-                    // Show success message
-                    showSuccessMessage('<?php _e('PDF file selected successfully!', 'sunshineportal-pdf'); ?>');
-                });
-                
-                mediaUploader.open();
-            });
-        }
-        
-        // Handle direct file upload (anonymous users)
-        $('#directPdfUpload').on('change', function(e) {
-            var file = e.target.files[0];
-            
-            if (!file) return;
-            
-            // Validate file type
-            if (file.type !== 'application/pdf') {
-                alert('<?php _e('Please select a PDF file only.', 'sunshineportal-pdf'); ?>');
-                $(this).val('');
-                return;
-            }
-            
-            // Validate file size (10MB limit)
-            if (file.size > 10 * 1024 * 1024) {
-                alert('<?php _e('File size must be less than 10MB.', 'sunshineportal-pdf'); ?>');
-                $(this).val('');
-                return;
-            }
-            
-            // Show upload progress
-            $('#pdfPreview').html(
-                '<div style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 4px; margin-top: 10px; border-left: 4px solid #ffc107;">' +
-                '<p style="margin: 0;"><strong><?php _e('Uploading...', 'sunshineportal-pdf'); ?></strong></p>' +
-                '<div style="width: 100%; background: #e9ecef; border-radius: 4px; margin-top: 5px;">' +
-                '<div id="uploadProgress" style="width: 0%; height: 4px; background: #007cba; border-radius: 4px; transition: width 0.3s;"></div>' +
-                '</div>' +
-                '</div>'
-            );
-            
-            // Upload the file
-            uploadPdfFile(file);
-        });
-        
-        // Upload function for anonymous users
-        function uploadPdfFile(file) {
-            var formData = new FormData();
-            formData.append('pdf_file', file);
-            
-            $.ajax({
-                url: pdfManager.apiUrl + 'upload',
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                headers: {
-                    'X-WP-Nonce': pdfManager.nonce
-                },
-                xhr: function() {
-                    var xhr = new window.XMLHttpRequest();
-                    xhr.upload.addEventListener('progress', function(e) {
-                        if (e.lengthComputable) {
-                            var percentComplete = (e.loaded / e.total) * 100;
-                            $('#uploadProgress').css('width', percentComplete + '%');
-                        }
-                    }, false);
-                    return xhr;
-                },
-                success: function(response) {
-                    if (response.success) {
-                        // Store the file ID
-                        $('#pdfFileId').val(response.file_id);
-                        
-                        // Update preview
-                        $('#pdfPreview').html(
-                            '<div style="background: #f0f8ff; padding: 10px; border-radius: 4px; margin-top: 10px; border-left: 4px solid #007cba;">' +
-                            '<p style="margin: 0;"><strong><?php _e('Uploaded File:', 'sunshineportal-pdf'); ?></strong></p>' +
-                            '<p style="margin: 5px 0 0 0;"><span class="dashicons dashicons-media-document" style="color: #dc3545;"></span> ' + 
-                            response.filename + '</p>' +
-                            '<p style="margin: 5px 0 0 0; font-size: 13px; color: #666;">Size: ' + response.file_size + '</p>' +
-                            '</div>'
-                        );
-                        
-                        // Show the remove button
-                        $('#removePdfBtn').show();
-                        
-                        // Show success message
-                        showSuccessMessage('<?php _e('PDF file uploaded successfully!', 'sunshineportal-pdf'); ?>');
-                    } else {
-                        alert('Upload failed: ' + (response.message || 'Unknown error'));
-                    }
-                },
-                error: function(xhr, status, error) {
-                    alert('<?php _e('Upload failed. Please try again.', 'sunshineportal-pdf'); ?>');
-                    console.error('Upload error:', error);
-                }
-            });
-        }
-        
-        // Helper function to show success messages
-        function showSuccessMessage(message) {
-            var successMsg = $('<div style="background: #d4edda; color: #155724; padding: 8px; border-radius: 4px; margin-top: 10px;">✓ ' + message + '</div>');
-            $('#pdfPreview').append(successMsg);
-            
-            // Remove success message after 3 seconds
-            setTimeout(function() {
-                successMsg.fadeOut();
-            }, 3000);
-        }
-        
-        // Handle remove PDF file button (both logged-in and anonymous)
-        $(document).on('click', '#removePdfBtn', function(e) {
-            e.preventDefault();
-            
-            // Clear the hidden field
-            $('#pdfFileId').val('');
-            
-            // Clear the file input if it exists
-            $('#directPdfUpload').val('');
-            
-            // Clear the preview
-            $('#pdfPreview').html('');
-            
-            // Hide the remove button
-            $(this).hide();
-            
-            // Show confirmation message
-            var removeMsg = $('<div style="background: #f8d7da; color: #721c24; padding: 8px; border-radius: 4px; margin-top: 10px;">✓ <?php _e('File removed successfully!', 'sunshineportal-pdf'); ?></div>');
-            $('#pdfPreview').html(removeMsg);
-            
-            // Remove message after 3 seconds
-            setTimeout(function() {
-                removeMsg.fadeOut();
-            }, 3000);
-        });
-    }
-});
+// Global variables for step management
+let currentStep = 1;
+let appliedFilters = {
+    category: [],
+    type: [],
+    department: [],
+    search: ''
+};
 
-// FIXED: Add the missing addPDF function for form submission with debugging
-function addPDF(event) {
-    event.preventDefault();
+// Step navigation functions
+function goToStep(stepNumber) {
+    // Hide current step
+    document.querySelectorAll('.step-content').forEach(content => {
+        content.style.display = 'none';
+    });
     
-    console.log('Form submission started');
+    // Remove active class from all steps
+    document.querySelectorAll('.step').forEach(step => {
+        step.classList.remove('active', 'completed');
+    });
     
-    // Collect form data
-    var formData = new FormData(event.target);
+    // Show target step
+    document.getElementById(`content-step-${stepNumber}`).style.display = 'block';
     
-    // Check if PDF file was selected
-    var pdfFileId = formData.get('pdf_file_id');
-    if (!pdfFileId) {
-        alert('<?php _e('Please select a PDF file before submitting.', 'sunshineportal-pdf'); ?>');
-        return;
+    // Update step indicators
+    for (let i = 1; i <= 4; i++) {
+        const stepElement = document.getElementById(`step-${i}`);
+        if (i < stepNumber) {
+            stepElement.classList.add('completed');
+        } else if (i === stepNumber) {
+            stepElement.classList.add('active');
+        }
     }
     
-    // Prepare data for API
-    var pdfData = {
-        title: formData.get('title'),
-        description: formData.get('description'),
-        category: [formData.get('category')],    // Convert to array for API
-        type: [formData.get('type')],           // Convert to array for API  
-        department: [formData.get('department')], // Convert to array for API
-        pdf_file_id: pdfFileId
-    };
+    currentStep = stepNumber;
     
-    // Debug: Log the data being sent
-    console.log('Data being sent to API:', pdfData);
-    console.log('API URL:', pdfManager.apiUrl + 'resources');
-    console.log('Nonce:', pdfManager.nonce);
-    
-    // Show loading state
-    var submitBtn = event.target.querySelector('.add-pdf-btn');
-    var originalText = submitBtn.textContent;
-    submitBtn.textContent = '<?php _e('Creating PDF Resource...', 'sunshineportal-pdf'); ?>';
-    submitBtn.disabled = true;
-    
-    // Submit to API
-    jQuery.ajax({
-        url: pdfManager.apiUrl + 'resources',
-        type: 'POST',
-        data: JSON.stringify(pdfData),
-        contentType: 'application/json',
-        headers: {
-            'X-WP-Nonce': pdfManager.nonce
-        },
-        beforeSend: function() {
-            console.log('AJAX request starting...');
-        },
-        success: function(response) {
-            console.log('API Response:', response);
-            if (response.success) {
-                alert('<?php _e('PDF resource added successfully!', 'sunshineportal-pdf'); ?>');
-                
-                // Reset the form
-                event.target.reset();
-                
-                // Clear file selection
-                jQuery('#pdfFileId').val('');
-                jQuery('#pdfPreview').html('');
-                jQuery('#removePdfBtn').hide();
-                
-                // Clear direct upload input if it exists
-                var directUpload = document.getElementById('directPdfUpload');
-                if (directUpload) {
-                    directUpload.value = '';
-                }
-                
-                // Refresh the PDF list if the manager instance exists
-                if (typeof pdfManagerInstance !== 'undefined' && pdfManagerInstance.loadPDFs) {
-                    pdfManagerInstance.loadPDFs();
-                }
-            } else {
-                alert('<?php _e('Failed to create PDF resource: ', 'sunshineportal-pdf'); ?>' + (response.message || 'Unknown error'));
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('AJAX Error Details:');
-            console.error('Status:', status);
-            console.error('Error:', error);
-            console.error('Response Text:', xhr.responseText);
-            console.error('Status Code:', xhr.status);
-            
-            try {
-                var errorResponse = JSON.parse(xhr.responseText);
-                console.error('Parsed Error Response:', errorResponse);
-            } catch(e) {
-                console.error('Could not parse error response');
-            }
-            
-            alert('<?php _e('Failed to create PDF resource. Please try again.', 'sunshineportal-pdf'); ?>');
-        },
-        complete: function() {
-            console.log('AJAX request completed');
-            // Reset button state
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-        }
-    });
+    // Load data when entering certain steps
+    if (stepNumber === 2) {
+        loadTaxonomies();
+    } else if (stepNumber === 3) {
+        loadPDFs();
+        updateAppliedFiltersDisplay();
+    }
 }
+
+// Instructions modal toggle
+function toggleInstructions() {
+    const modal = document.getElementById('instructionsModal');
+    modal.style.display = modal.style.display === 'none' ? 'block' : 'none';
+}
+
+// Close modal when clicking outside of it
+window.onclick = function(event) {
+    const modal = document.getElementById('instructionsModal');
+    if (event.target === modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Initialize the component
+document.addEventListener('DOMContentLoaded', function() {
+    goToStep(1);
+});
 </script>

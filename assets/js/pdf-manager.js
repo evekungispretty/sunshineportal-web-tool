@@ -1,528 +1,744 @@
 /**
- * WordPress PDF Manager Frontend JavaScript - FIXED VERSION
+ * SunshinePortal PDF Manager - 4-Step Flow JavaScript
  * File: assets/js/pdf-manager.js
- * 
- * FIXES APPLIED:
- * 1. Replaced wpApiSettings with pdfManager (localized in main plugin)
- * 2. Fixed taxonomy loading to use custom endpoint
- * 3. Removed showMoreFilters function (not needed)
- * 4. Added better error handling
  */
 
-class WordPressPDFManager {
-    constructor() {
-        this.currentFilters = {
-            category: [],
-            type: [],
-            department: []
-        };
-        this.searchQuery = '';
-        this.currentSort = 'date';
-        this.currentOrder = 'DESC';
-        this.pdfs = [];
+(function($) {
+    'use strict';
+
+    // Global variables
+    let currentStep = 1;
+    let appliedFilters = {
+        category: [],
+        type: [],
+        department: [],
+        search: ''
+    };
+    let allTaxonomies = {};
+    let allPDFs = [];
+    let filteredPDFs = [];
+
+    // Initialize the application
+    $(document).ready(function() {
+        initializePDFManager();
+    });
+
+    function initializePDFManager() {
+        goToStep(1);
+        setupEventListeners();
+        setupUploadHandlers();
+        loadTaxonomies();
+    }
+
+    // Step navigation functions
+    window.goToStep = function(stepNumber) {
+        // Validate step number
+        if (stepNumber < 1 || stepNumber > 4) return;
+
+        // Hide current step
+        $('.step-content').hide();
         
-        this.init();
-    }
-    
-    async init() {
-        await this.loadTaxonomies();
-        await this.loadPDFs();
-        this.bindEvents();
-        this.renderFilterOptions();
-    }
-    
-    /**
-     * Load taxonomy terms for filter dropdowns
-     * FIX #1: Changed from wpApiSettings to pdfManager
-     */
-    async loadTaxonomies() {
-        try {
-            // OLD (BROKEN): const response = await fetch(`${wpApiSettings.root}wp/v2/${taxonomy.replace('pdf_', '')}`);
-            // NEW (FIXED): Use our custom taxonomies endpoint
-            const response = await fetch(`${pdfManager.apiUrl}taxonomies`, {
-                headers: {
-                    'X-WP-Nonce': pdfManager.nonce
-                }
-            });
-            
-            if (!response.ok) throw new Error(`Failed to fetch taxonomies: ${response.status}`);
-            
-            this.taxonomies = await response.json();
-            
-        } catch (error) {
-            console.error('Error loading taxonomies:', error);
-            // FIX #4: Added fallback to prevent crashes
-            this.taxonomies = {
-                category: [],
-                type: [],
-                department: []
-            };
-        }
-    }
-    
-    /**
-     * Load PDFs from WordPress REST API
-     * FIX #2: Use proper pdfManager localization
-     */
-    async loadPDFs() {
-        try {
-            const params = new URLSearchParams({
-                search: this.searchQuery,
-                orderby: this.currentSort,
-                order: this.currentOrder,
-                ...this.buildFilterParams()
-            });
-            
-            // FIXED: Use pdfManager.apiUrl instead of undefined wpApiSettings
-            const response = await fetch(`${pdfManager.apiUrl}resources?${params}`, {
-                headers: {
-                    'X-WP-Nonce': pdfManager.nonce
-                }
-            });
-            
-            if (!response.ok) throw new Error('Failed to load PDFs');
-            
-            this.pdfs = await response.json();
-            this.renderPDFs();
-            this.updateResultsCount();
-            
-        } catch (error) {
-            console.error('Error loading PDFs:', error);
-            this.showError('Failed to load PDF resources');
-        }
-    }
-    
-    /**
-     * Build filter parameters for API request
-     */
-    buildFilterParams() {
-        const params = {};
+        // Remove active classes from all steps
+        $('.step').removeClass('active completed');
         
-        if (this.currentFilters.category.length > 0) {
-            params['category[]'] = this.currentFilters.category;
-        }
-        if (this.currentFilters.type.length > 0) {
-            params['type[]'] = this.currentFilters.type;
-        }
-        if (this.currentFilters.department.length > 0) {
-            params['department[]'] = this.currentFilters.department;
+        // Show target step
+        $(`#content-step-${stepNumber}`).show();
+        
+        // Update step indicators
+        for (let i = 1; i <= 4; i++) {
+            const $stepElement = $(`#step-${i}`);
+            if (i < stepNumber) {
+                $stepElement.addClass('completed');
+            } else if (i === stepNumber) {
+                $stepElement.addClass('active');
+            }
         }
         
-        return params;
-    }
-    
-    /**
-     * Bind event listeners
-     */
-    bindEvents() {
+        currentStep = stepNumber;
+        
+        // Load data when entering certain steps
+        if (stepNumber === 2) {
+            loadTaxonomies();
+        } else if (stepNumber === 3) {
+            loadPDFs();
+            updateAppliedFiltersDisplay();
+        }
+    };
+
+    // Setup all event listeners
+    function setupEventListeners() {
         // Search input
-        const searchInput = document.querySelector('.search-input');
-        if (searchInput) {
-            let searchTimeout;
-            searchInput.addEventListener('input', (e) => {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    this.searchQuery = e.target.value;
-                    this.loadPDFs();
-                }, 300);
-            });
-        }
-        
+        $('.search-input').on('input', debounce(function() {
+            appliedFilters.search = $(this).val().trim();
+            if (currentStep === 3) {
+                filterPDFs();
+            }
+        }, 300));
+
         // Sort dropdown
-        const sortDropdown = document.querySelector('.sort-dropdown');
-        if (sortDropdown) {
-            sortDropdown.addEventListener('change', (e) => {
-                const [orderby, order] = e.target.value.split('-');
-                this.currentSort = orderby;
-                this.currentOrder = order.toUpperCase();
-                this.loadPDFs();
-            });
-        }
-        
+        $('.sort-dropdown').on('change', function() {
+            if (currentStep === 3) {
+                sortPDFs();
+            }
+        });
+
         // Close dropdowns when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.filter-dropdown')) {
-                this.closeAllDropdowns();
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('.filter-dropdown').length) {
+                $('.dropdown-content').removeClass('show');
+                $('.dropdown-button').removeClass('active');
+            }
+        });
+
+        // Modal close
+        $(document).on('click', '.modal', function(e) {
+            if (e.target === this) {
+                hideModal();
             }
         });
     }
-    
-    /**
-     * Render filter options from taxonomies
-     */
-    renderFilterOptions() {
-        if (!this.taxonomies) return;
-        
-        Object.keys(this.taxonomies).forEach(filterType => {
-            const dropdown = document.getElementById(`${filterType}Dropdown`);
-            if (!dropdown) return;
-            
-            let optionsContainer = dropdown.querySelector('.filter-options');
-            if (!optionsContainer) {
-                optionsContainer = document.createElement('div');
-                optionsContainer.className = 'filter-options';
-                dropdown.appendChild(optionsContainer);
-            }
-            
-            optionsContainer.innerHTML = this.taxonomies[filterType].map(term => `
-                <div class="filter-option">
-                    <input type="checkbox" 
-                           id="${filterType}-${term.slug}" 
-                           value="${term.slug}" 
-                           onchange="pdfManagerInstance.updateFilters()">
-                    <label for="${filterType}-${term.slug}">${term.name}</label>
-                </div>
-            `).join('');
-        });
-    }
-    
-    /**
-     * Toggle dropdown visibility
-     */
-    toggleDropdown(filterType) {
-        const dropdown = document.getElementById(filterType + 'Dropdown');
-        const button = dropdown.previousElementSibling;
+
+    // Dropdown functionality
+    window.toggleDropdown = function(filterType) {
+        const $button = $(`#${filterType}Dropdown`).siblings('.dropdown-button');
+        const $dropdown = $(`#${filterType}Dropdown`);
         
         // Close other dropdowns
-        this.closeAllDropdowns(dropdown);
+        $('.dropdown-content').not($dropdown).removeClass('show');
+        $('.dropdown-button').not($button).removeClass('active');
         
-        dropdown.classList.toggle('show');
-        button.classList.toggle('active');
+        // Toggle current dropdown
+        $button.toggleClass('active');
+        $dropdown.toggleClass('show');
+    };
+
+    // Clear individual filter
+    window.clearFilter = function(filterType) {
+        appliedFilters[filterType] = [];
+        updateFilterLabel(filterType);
+        if (currentStep === 3) {
+            filterPDFs();
+        }
+        
+        // Update checkboxes
+        $(`#${filterType}Dropdown .filter-option`).removeClass('selected');
+        
+        // Close dropdown
+        $(`#${filterType}Dropdown`).removeClass('show');
+        $(`#${filterType}Dropdown`).siblings('.dropdown-button').removeClass('active');
+    };
+
+    // Clear all filters
+    window.clearAllFilters = function() {
+        appliedFilters = {
+            category: [],
+            type: [],
+            department: [],
+            search: ''
+        };
+        
+        // Reset UI
+        updateFilterLabel('category');
+        updateFilterLabel('type');
+        updateFilterLabel('department');
+        $('.search-input').val('');
+        $('.filter-option').removeClass('selected');
+        
+        if (currentStep === 3) {
+            filterPDFs();
+            updateAppliedFiltersDisplay();
+        }
+    };
+
+    // Instructions modal toggle
+    window.toggleInstructions = function() {
+        const $modal = $('#instructionsModal');
+        if ($modal.is(':visible')) {
+            hideModal();
+        } else {
+            showModal();
+        }
+    };
+
+    function showModal() {
+        $('#instructionsModal').show();
+        $('body').addClass('modal-open');
     }
-    
-    /**
-     * Close all dropdowns except the specified one
-     */
-    closeAllDropdowns(except = null) {
-        document.querySelectorAll('.dropdown-content').forEach(content => {
-            if (content !== except) {
-                content.classList.remove('show');
-                content.previousElementSibling.classList.remove('active');
+
+    function hideModal() {
+        $('#instructionsModal').hide();
+        $('body').removeClass('modal-open');
+    }
+
+    // Load taxonomies from API
+    function loadTaxonomies() {
+        if (Object.keys(allTaxonomies).length > 0) {
+            populateFilterDropdowns();
+            return;
+        }
+
+        $.ajax({
+            url: pdfManager.apiUrl + 'taxonomies',
+            type: 'GET',
+            success: function(response) {
+                allTaxonomies = response;
+                populateFilterDropdowns();
+            },
+            error: function() {
+                console.error('Failed to load taxonomies');
             }
         });
     }
-    
-    /**
-     * Update filters based on checkbox changes
-     */
-    updateFilters() {
-        ['category', 'type', 'department'].forEach(filterType => {
-            const checked = [];
-            document.querySelectorAll(`#${filterType}Dropdown input[type="checkbox"]:checked`)
-                .forEach(checkbox => {
-                    checked.push(checkbox.value);
-                });
-            this.currentFilters[filterType] = checked;
-            this.updateFilterLabel(filterType);
-        });
-        
-        this.loadPDFs();
-    }
-    
-    /**
-     * Clear specific filter
-     */
-    clearFilter(filterType) {
-        this.currentFilters[filterType] = [];
-        
-        document.querySelectorAll(`#${filterType}Dropdown input[type="checkbox"]`)
-            .forEach(checkbox => {
-                checkbox.checked = false;
+
+    // Populate filter dropdowns
+    function populateFilterDropdowns() {
+        Object.keys(allTaxonomies).forEach(function(taxonomy) {
+            const terms = allTaxonomies[taxonomy];
+            const $container = $(`#${taxonomy}Dropdown .filter-options`);
+            
+            $container.empty();
+            
+            terms.forEach(function(term) {
+                const $option = $('<div>')
+                    .addClass('filter-option')
+                    .attr('data-value', term.slug)
+                    .text(term.name)
+                    .on('click', function() {
+                        toggleFilterOption(taxonomy, term.slug, term.name, $(this));
+                    });
+                
+                $container.append($option);
             });
-        
-        this.updateFilterLabel(filterType);
-        this.loadPDFs();
+        });
     }
-    
-    /**
-     * Update filter button label
-     */
-    updateFilterLabel(filterType) {
-        const label = document.getElementById(filterType + 'Label');
-        if (!label) return;
+
+    // Toggle filter option
+    function toggleFilterOption(filterType, value, label, $element) {
+        const index = appliedFilters[filterType].indexOf(value);
         
-        const count = this.currentFilters[filterType].length;
-        
-        if (count === 0) {
-            label.textContent = filterType.charAt(0).toUpperCase() + filterType.slice(1);
-        } else if (count === 1) {
-            // Show the actual term name
-            const termSlug = this.currentFilters[filterType][0];
-            const term = this.taxonomies[filterType]?.find(t => t.slug === termSlug);
-            label.textContent = term ? term.name : termSlug;
+        if (index === -1) {
+            appliedFilters[filterType].push(value);
+            $element.addClass('selected');
         } else {
-            label.textContent = `${filterType.charAt(0).toUpperCase() + filterType.slice(1)} (${count})`;
+            appliedFilters[filterType].splice(index, 1);
+            $element.removeClass('selected');
+        }
+        
+        updateFilterLabel(filterType);
+        
+        if (currentStep === 3) {
+            filterPDFs();
         }
     }
-    
-    /**
-     * Render PDF cards
-     */
-    renderPDFs() {
-        const grid = document.getElementById('pdfGrid');
-        if (!grid) return;
+
+    // Update filter label
+    function updateFilterLabel(filterType) {
+        const count = appliedFilters[filterType].length;
+        const $label = $(`#${filterType}Label`);
         
-        if (this.pdfs.length === 0) {
-            grid.innerHTML = '<div class="no-results">No PDF resources found matching your criteria.</div>';
+        if (count === 0) {
+            $label.text(`All ${capitalize(filterType)}s`);
+        } else if (count === 1) {
+            const value = appliedFilters[filterType][0];
+            const term = findTermBySlug(filterType, value);
+            $label.text(term ? term.name : value);
+        } else {
+            $label.text(`${count} ${capitalize(filterType)}s`);
+        }
+    }
+
+    // Find term by slug
+    function findTermBySlug(taxonomy, slug) {
+        if (!allTaxonomies[taxonomy]) return null;
+        return allTaxonomies[taxonomy].find(term => term.slug === slug);
+    }
+
+    // Capitalize first letter
+    function capitalize(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    // Load PDFs from API
+    function loadPDFs() {
+        $('#pdfGrid').html('<div class="loading">Loading PDF resources...</div>');
+        $('#resultsCount').text('Loading...');
+
+        const params = new URLSearchParams();
+        
+        // Add filters to params
+        if (appliedFilters.search) {
+            params.append('search', appliedFilters.search);
+        }
+        
+        ['category', 'type', 'department'].forEach(function(filterType) {
+            if (appliedFilters[filterType].length > 0) {
+                appliedFilters[filterType].forEach(function(value) {
+                    params.append(`${filterType}[]`, value);
+                });
+            }
+        });
+
+        $.ajax({
+            url: pdfManager.apiUrl + 'resources?' + params.toString(),
+            type: 'GET',
+            success: function(response) {
+                allPDFs = response;
+                filteredPDFs = [...allPDFs];
+                sortPDFs();
+                renderPDFs();
+                updateResultsCount();
+                updateAppliedFiltersDisplay();
+            },
+            error: function() {
+                $('#pdfGrid').html('<div class="error">Failed to load PDF resources. Please try again.</div>');
+                $('#resultsCount').text('Error loading results');
+            }
+        });
+    }
+
+    // Filter PDFs based on current filters
+    function filterPDFs() {
+        loadPDFs(); // Reload with current filters
+    }
+
+    // Sort PDFs
+    function sortPDFs() {
+        const sortBy = $('.sort-dropdown').val();
+        
+        filteredPDFs.sort(function(a, b) {
+            switch (sortBy) {
+                case 'date-asc':
+                    return new Date(a.date) - new Date(b.date);
+                case 'date-desc':
+                    return new Date(b.date) - new Date(a.date);
+                case 'title-asc':
+                    return a.title.localeCompare(b.title);
+                case 'title-desc':
+                    return b.title.localeCompare(a.title);
+                case 'downloads-desc':
+                    return b.download_count - a.download_count;
+                default:
+                    return new Date(b.date) - new Date(a.date);
+            }
+        });
+        
+        renderPDFs();
+    }
+
+    // Render PDFs in grid
+    function renderPDFs() {
+        const $grid = $('#pdfGrid');
+        
+        if (filteredPDFs.length === 0) {
+            $grid.html(`
+                <div class="no-results">
+                    <h4>No PDFs found</h4>
+                    <p>Try adjusting your filters or search terms.</p>
+                </div>
+            `);
+            return;
+        }
+
+        const cardsHtml = filteredPDFs.map(function(pdf) {
+            const categories = pdf.categories.join(', ') || 'Uncategorized';
+            const types = pdf.types.join(', ') || 'No type';
+            const departments = pdf.departments.join(', ') || 'No department';
+            const fileSize = pdf.file_size || 'Unknown size';
+            const downloadCount = pdf.download_count || 0;
+
+            return `
+                <div class="pdf-card">
+                    <h4>${escapeHtml(pdf.title)}</h4>
+                    
+                    <div class="pdf-meta">
+                        <span class="pdf-tag">${escapeHtml(categories)}</span>
+                        <span class="pdf-tag">${escapeHtml(types)}</span>
+                        <span class="pdf-tag">${escapeHtml(departments)}</span>
+                    </div>
+                    
+                    <div class="pdf-stats">
+                        <span>Size: ${escapeHtml(fileSize)}</span>
+                        <span>Downloads: ${downloadCount}</span>
+                    </div>
+                    
+                    ${pdf.description ? `<p class="pdf-description">${escapeHtml(pdf.description)}</p>` : ''}
+                    
+                    <div class="pdf-actions">
+                        <button class="pdf-action-btn" onclick="previewPDF('${pdf.url}', '${escapeHtml(pdf.title)}')">
+                            Preview
+                        </button>
+                        <button class="pdf-action-btn primary" onclick="downloadPDF(${pdf.id}, '${pdf.download_url}')">
+                            Download
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        $grid.html(cardsHtml);
+    }
+
+    // Update results count
+    function updateResultsCount() {
+        const count = filteredPDFs.length;
+        const text = count === 1 ? '1 PDF found' : `${count} PDFs found`;
+        $('#resultsCount').text(text);
+    }
+
+    // Update applied filters display
+    function updateAppliedFiltersDisplay() {
+        const hasFilters = appliedFilters.search || 
+                          appliedFilters.category.length > 0 || 
+                          appliedFilters.type.length > 0 || 
+                          appliedFilters.department.length > 0;
+
+        const $container = $('#appliedFilters');
+        
+        if (!hasFilters) {
+            $container.hide();
+            return;
+        }
+
+        const $tags = $('#filterTags');
+        $tags.empty();
+
+        // Add search tag
+        if (appliedFilters.search) {
+            $tags.append(`
+                <span class="filter-tag">
+                    Search: "${escapeHtml(appliedFilters.search)}"
+                    <span class="remove-tag" onclick="removeSearchFilter()">×</span>
+                </span>
+            `);
+        }
+
+        // Add taxonomy tags
+        ['category', 'type', 'department'].forEach(function(filterType) {
+            appliedFilters[filterType].forEach(function(value) {
+                const term = findTermBySlug(filterType, value);
+                const label = term ? term.name : value;
+                
+                $tags.append(`
+                    <span class="filter-tag">
+                        ${capitalize(filterType)}: ${escapeHtml(label)}
+                        <span class="remove-tag" onclick="removeFilterTag('${filterType}', '${value}')">×</span>
+                    </span>
+                `);
+            });
+        });
+
+        $container.show();
+    }
+
+    // Remove search filter
+    window.removeSearchFilter = function() {
+        appliedFilters.search = '';
+        $('.search-input').val('');
+        if (currentStep === 3) {
+            filterPDFs();
+        }
+    };
+
+    // Remove filter tag
+    window.removeFilterTag = function(filterType, value) {
+        const index = appliedFilters[filterType].indexOf(value);
+        if (index !== -1) {
+            appliedFilters[filterType].splice(index, 1);
+            updateFilterLabel(filterType);
+            
+            // Update UI
+            $(`.filter-option[data-value="${value}"]`).removeClass('selected');
+            
+            if (currentStep === 3) {
+                filterPDFs();
+            }
+        }
+    };
+
+    // Preview PDF
+    window.previewPDF = function(url, title) {
+        window.open(url, '_blank');
+    };
+
+    // Download PDF
+    window.downloadPDF = function(pdfId, downloadUrl) {
+        // Track download
+        $.ajax({
+            url: downloadUrl,
+            type: 'POST',
+            headers: {
+                'X-WP-Nonce': pdfManager.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Open download URL
+                    window.location.href = response.download_url;
+                    
+                    // Update download count in UI
+                    updateDownloadCount(pdfId, response.new_count);
+                }
+            },
+            error: function() {
+                console.error('Failed to track download');
+                // Still allow download
+                const pdf = filteredPDFs.find(p => p.id === pdfId);
+                if (pdf) {
+                    window.location.href = pdf.url;
+                }
+            }
+        });
+    };
+
+    // Update download count in UI
+    function updateDownloadCount(pdfId, newCount) {
+        // Update in data arrays
+        const pdfIndex = allPDFs.findIndex(p => p.id === pdfId);
+        if (pdfIndex !== -1) {
+            allPDFs[pdfIndex].download_count = newCount;
+        }
+        
+        const filteredIndex = filteredPDFs.findIndex(p => p.id === pdfId);
+        if (filteredIndex !== -1) {
+            filteredPDFs[filteredIndex].download_count = newCount;
+        }
+        
+        // Re-render if currently showing and sorted by downloads
+        if (currentStep === 3 && $('.sort-dropdown').val() === 'downloads-desc') {
+            sortPDFs();
+        }
+    }
+
+    // Setup upload handlers - simplified for all users
+    function setupUploadHandlers() {
+        // Handle direct file upload for all users
+        $(document).on('change', '#directPdfUpload', function(e) {
+            var file = e.target.files[0];
+            
+            if (!file) return;
+            
+            if (file.type !== 'application/pdf') {
+                alert('Please select a PDF file only.');
+                $(this).val('');
+                return;
+            }
+            
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size must be less than 10MB.');
+                $(this).val('');
+                return;
+            }
+            
+            showUploadProgress(file.name);
+            uploadPdfFile(file);
+        });
+        
+        // Handle remove PDF file button
+        $(document).on('click', '#removePdfBtn', function(e) {
+            e.preventDefault();
+            
+            $('#pdfFileId').val('');
+            $('#directPdfUpload').val('');
+            $('#pdfPreview').html('');
+            $(this).hide();
+            
+            showRemoveMessage();
+        });
+    }
+
+    // Upload progress display
+    function showUploadProgress(filename) {
+        $('#pdfPreview').html(`
+            <div style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 4px; border-left: 4px solid #ffc107;">
+                <p style="margin: 0;"><strong>Uploading: ${escapeHtml(filename)}</strong></p>
+                <div style="width: 100%; background: #e9ecef; border-radius: 4px; margin-top: 5px;">
+                    <div id="uploadProgress" style="width: 0%; height: 4px; background: #007cba; border-radius: 4px; transition: width 0.3s;"></div>
+                </div>
+            </div>
+        `);
+    }
+
+    // Upload PDF file
+    function uploadPdfFile(file) {
+        var formData = new FormData();
+        formData.append('pdf_file', file);
+        
+        $.ajax({
+            url: pdfManager.apiUrl + 'upload',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'X-WP-Nonce': pdfManager.nonce
+            },
+            xhr: function() {
+                var xhr = new window.XMLHttpRequest();
+                xhr.upload.addEventListener('progress', function(e) {
+                    if (e.lengthComputable) {
+                        var percentComplete = (e.loaded / e.total) * 100;
+                        $('#uploadProgress').css('width', percentComplete + '%');
+                    }
+                }, false);
+                return xhr;
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#pdfFileId').val(response.file_id);
+                    
+                    $('#pdfPreview').html(`
+                        <div style="background: #f0f8ff; padding: 10px; border-radius: 4px; border-left: 4px solid #007cba;">
+                            <p style="margin: 0;"><strong>Uploaded File:</strong></p>
+                            <p style="margin: 5px 0 0 0;">
+                                <span class="dashicons dashicons-media-document" style="color: #dc3545;"></span> 
+                                ${escapeHtml(response.filename)}
+                            </p>
+                            <p style="margin: 5px 0 0 0; font-size: 13px; color: #666;">Size: ${escapeHtml(response.file_size)}</p>
+                            <p style="margin: 5px 0 0 0; font-size: 13px; color: #28a745;">
+                                <strong>✓ File uploaded successfully!</strong>
+                            </p>
+                        </div>
+                    `);
+                    
+                    $('#removePdfBtn').show();
+                } else {
+                    alert('Upload failed: ' + (response.message || 'Unknown error'));
+                }
+            },
+            error: function(xhr, status, error) {
+                var errorMessage = 'Upload failed. Please try again.';
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.message) {
+                        errorMessage = 'Upload failed: ' + response.message;
+                    }
+                } catch (e) {
+                    // Use default error message
+                }
+                alert(errorMessage);
+                console.error('Upload error:', error);
+            }
+        });
+    }
+
+    // Remove message helper  
+    function showRemoveMessage() {
+        $('#pdfPreview').html(`
+            <div style="background: #f8d7da; color: #721c24; padding: 8px; border-radius: 4px; margin-top: 10px;">
+                ✓ File removed successfully!
+            </div>
+        `);
+        
+        setTimeout(function() {
+            $('#pdfPreview').fadeOut(function() {
+                $(this).html('').show();
+            });
+        }, 3000);
+    }
+
+    // Add PDF function (form submission)
+    window.addPDF = function(event) {
+        event.preventDefault();
+        
+        var formData = new FormData(event.target);
+        
+        var pdfFileId = formData.get('pdf_file_id');
+        if (!pdfFileId) {
+            alert('Please select a PDF file before submitting.');
             return;
         }
         
-        grid.innerHTML = this.pdfs.map(pdf => this.renderPDFCard(pdf)).join('');
-    }
-    
-    /**
-     * Render individual PDF card
-     */
-    renderPDFCard(pdf) {
-        const categories = pdf.categories || [];
-        const types = pdf.types || [];
-        const departments = pdf.departments || [];
-        const allTags = [...categories, ...types, ...departments];
+        var requiredFields = ['title', 'category', 'type', 'department'];
+        var missingFields = [];
         
-        return `
-            <div class="pdf-card">
-                <div class="pdf-icon">PDF</div>
-                <div class="pdf-title">${this.escapeHtml(pdf.title)}</div>
-                <div class="pdf-meta">
-                    ${pdf.file_size || 'Unknown size'} • ${pdf.download_count} downloads
-                </div>
-                ${allTags.length > 0 ? `
-                    <div class="pdf-tags">
-                        ${allTags.map(tag => `<span class="pdf-tag">${this.escapeHtml(tag)}</span>`).join('')}
-                    </div>
-                ` : ''}
-                <p style="font-size: 14px; color: #666; margin-bottom: 15px; line-height: 1.4;">
-                    ${this.escapeHtml(pdf.description || '')}
-                </p>
-                <button class="download-btn" onclick="pdfManagerInstance.downloadPDF(${pdf.id})">
-                    Download PDF
-                </button>
-            </div>
-        `;
-    }
-    
-    /**
-     * Handle PDF download
-     * FIX #2: Use pdfManager.apiUrl consistently
-     */
-    async downloadPDF(id) {
-        try {
-            const response = await fetch(`${pdfManager.apiUrl}download/${id}`, {
-                method: 'POST',
-                headers: {
-                    'X-WP-Nonce': pdfManager.nonce,
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (!response.ok) throw new Error('Download failed');
-            
-            const result = await response.json();
-            
-            if (result.success && result.download_url) {
-                // Open the PDF in a new tab
-                window.open(result.download_url, '_blank');
-                
-                // Update the display to reflect new download count
-                this.loadPDFs();
-            } else {
-                throw new Error('Invalid download response');
-            }
-            
-        } catch (error) {
-            console.error('Download error:', error);
-            alert('Failed to download PDF. Please try again.');
-        }
-    }
-    
-    /**
-     * Add new PDF (admin function)
-     * FIX #2: Use pdfManager.apiUrl consistently
-     */
-    async addPDF(formData) {
-        try {
-            const response = await fetch(`${pdfManager.apiUrl}resources`, {
-                method: 'POST',
-                headers: {
-                    'X-WP-Nonce': pdfManager.nonce,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            });
-            
-            if (!response.ok) throw new Error('Failed to create PDF resource');
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                alert('PDF resource added successfully!');
-                this.loadPDFs(); // Refresh the list
-                return true;
-            } else {
-                throw new Error(result.message || 'Unknown error');
-            }
-            
-        } catch (error) {
-            console.error('Error adding PDF:', error);
-            alert('Failed to add PDF resource: ' + error.message);
-            return false;
-        }
-    }
-    
-    /**
-     * Update results count display
-     */
-    updateResultsCount() {
-        const countElement = document.getElementById('resultsCount');
-        if (countElement) {
-            const count = this.pdfs.length;
-            countElement.textContent = `${count} resource${count !== 1 ? 's' : ''} found`;
-        }
-    }
-    
-    /**
-     * Show error message
-     */
-    showError(message) {
-        const grid = document.getElementById('pdfGrid');
-        if (grid) {
-            grid.innerHTML = `<div class="no-results error">Error: ${this.escapeHtml(message)}</div>`;
-        }
-    }
-    
-    /**
-     * Escape HTML to prevent XSS
-     */
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-    
-    /**
-     * Toggle admin panel
-     */
-    toggleAdmin() {
-        const panel = document.getElementById('adminPanel');
-        if (panel) {
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        }
-    }
-    
-    /**
-     * Handle admin form submission
-     */
-    async handleAdminForm(event) {
-        event.preventDefault();
-        
-        const formData = new FormData(event.target);
-        const pdfData = {
-            title: formData.get('title'),
-            description: formData.get('description'),
-            category: formData.getAll('category'),
-            type: formData.getAll('type'),
-            department: formData.getAll('department'),
-            pdf_file_id: formData.get('pdf_file_id')
-        };
-        
-        const success = await this.addPDF(pdfData);
-        
-        if (success) {
-            event.target.reset();
-        }
-    }
-}
-
-// Global functions for onclick handlers (maintain backward compatibility)
-let pdfManagerInstance;
-
-function toggleDropdown(filterType) {
-    if (pdfManagerInstance) {
-        pdfManagerInstance.toggleDropdown(filterType);
-    }
-}
-
-function clearFilter(filterType) {
-    if (pdfManagerInstance) {
-        pdfManagerInstance.clearFilter(filterType);
-    }
-}
-
-function updateFilters() {
-    if (pdfManagerInstance) {
-        pdfManagerInstance.updateFilters();
-    }
-}
-
-function toggleAdmin() {
-    if (pdfManagerInstance) {
-        pdfManagerInstance.toggleAdmin();
-    }
-}
-
-function addPDF(event) {
-    if (pdfManagerInstance) {
-        pdfManagerInstance.handleAdminForm(event);
-    }
-}
-
-// FIX #3: Removed showMoreFilters function completely (was causing error)
-
-// FIX #4: Added check for pdfManager before initializing
-document.addEventListener('DOMContentLoaded', function() {
-    // Check if we have the necessary WordPress variables
-    if (typeof pdfManager !== 'undefined') {
-        pdfManagerInstance = new WordPressPDFManager();
-    } else {
-        console.error('PDF Manager: WordPress localization data not found. Make sure the plugin is properly activated.');
-    }
-});
-
-/**
- * WordPress Media Library Integration for Admin Panel
- */
-function initMediaUploader() {
-    if (typeof wp !== 'undefined' && wp.media) {
-        let mediaUploader;
-        
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('upload-pdf-btn')) {
-                e.preventDefault();
-                
-                if (mediaUploader) {
-                    mediaUploader.open();
-                    return;
-                }
-                
-                mediaUploader = wp.media({
-                    title: 'Choose PDF File',
-                    button: {
-                        text: 'Use this PDF'
-                    },
-                    library: {
-                        type: 'application/pdf'
-                    },
-                    multiple: false
-                });
-                
-                mediaUploader.on('select', function() {
-                    const attachment = mediaUploader.state().get('selection').first().toJSON();
-                    const fileInput = document.getElementById('pdfFileId');
-                    const preview = document.getElementById('pdfPreview');
-                    
-                    if (fileInput) fileInput.value = attachment.id;
-                    if (preview) preview.innerHTML = `<p><strong>Selected:</strong> ${attachment.filename}</p>`;
-                });
-                
-                mediaUploader.open();
+        requiredFields.forEach(function(field) {
+            var value = formData.get(field);
+            if (!value || value.trim() === '') {
+                missingFields.push(field);
             }
         });
-    }
-}
+        
+        if (missingFields.length > 0) {
+            alert('Please fill in all required fields: ' + missingFields.join(', '));
+            return;
+        }
+        
+        var pdfData = {
+            title: formData.get('title').trim(),
+            description: formData.get('description').trim(),
+            category: [formData.get('category').trim()],
+            type: [formData.get('type').trim()],
+            department: [formData.get('department').trim()],
+            pdf_file_id: pdfFileId.trim()
+        };
+        
+        var $submitBtn = $(event.target).find('.add-pdf-btn');
+        var originalText = $submitBtn.text();
+        $submitBtn.text('Creating PDF Resource...').prop('disabled', true);
+        
+        $.ajax({
+            url: pdfManager.apiUrl + 'resources',
+            type: 'POST',
+            data: JSON.stringify(pdfData),
+            contentType: 'application/json',
+            headers: {
+                'X-WP-Nonce': pdfManager.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('PDF resource added successfully!');
+                    
+                    // Reset form
+                    event.target.reset();
+                    $('#pdfFileId').val('');
+                    $('#pdfPreview').html('');
+                    $('#removePdfBtn').hide();
+                    
+                    var directUpload = document.getElementById('directPdfUpload');
+                    if (directUpload) {
+                        directUpload.value = '';
+                    }
+                    
+                    // Go back to browse step and reload PDFs
+                    goToStep(3);
+                } else {
+                    alert('Failed to create PDF resource: ' + (response.message || 'Unknown error'));
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', xhr.responseText);
+                alert('Failed to create PDF resource. Please try again.');
+            },
+            complete: function() {
+                $submitBtn.text(originalText).prop('disabled', false);
+            }
+        });
+    };
 
-// Initialize media uploader when ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initMediaUploader);
-} else {
-    initMediaUploader();
-}
+    // Utility functions
+    function escapeHtml(text) {
+        if (!text) return '';
+        var map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.toString().replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
+    function debounce(func, wait) {
+        var timeout;
+        return function executedFunction() {
+            var context = this;
+            var args = arguments;
+            var later = function() {
+                timeout = null;
+                func.apply(context, args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+})(jQuery);

@@ -3,7 +3,7 @@
  * Plugin Name: SunshinePortal PDF Tool
  * Plugin URI: education.ufl.edu
  * Description: A comprehensive PDF resource management tool with filtering and download tracking
- * Version: 1.0.0
+ * Version: 2.0.1
  * Author: Eve
  * License: GPL v2 or later
  * Text Domain: sunshineportal-pdf
