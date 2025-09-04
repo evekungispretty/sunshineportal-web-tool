@@ -78,7 +78,6 @@ class SunshinePortal_PDF_Manager {
             );
             
             // FIXED: Enqueue media library for frontend when shortcode is present AND user is logged in
-            // (needed for the "Choose from Media Library" button to work)
             if ($this->has_shortcode_with_admin() && is_user_logged_in()) {
                 wp_enqueue_media();
             }
@@ -152,27 +151,27 @@ class SunshinePortal_PDF_Manager {
     }
     
     public function register_taxonomies() {
-        // PDF Categories
+        // PDF Categories- ELC
         register_taxonomy('pdf_category', 'pdf_resource', array(
-            'label' => __('PDF Categories', 'sunshineportal-pdf'),
+            'label' => __('ELC', 'sunshineportal-pdf'),
             'rewrite' => array('slug' => 'pdf-category'),
             'hierarchical' => true,
             'show_in_rest' => true,
             'show_admin_column' => true,
         ));
         
-        // PDF Types
+        // PDF Types- County
         register_taxonomy('pdf_type', 'pdf_resource', array(
-            'label' => __('PDF Types', 'sunshineportal-pdf'),
+            'label' => __('County', 'sunshineportal-pdf'),
             'rewrite' => array('slug' => 'pdf-type'),
             'hierarchical' => true,
             'show_in_rest' => true,
             'show_admin_column' => true,
         ));
         
-        // Departments
+        // Departments- Year
         register_taxonomy('pdf_department', 'pdf_resource', array(
-            'label' => __('Departments', 'sunshineportal-pdf'),
+            'label' => __('Years', 'sunshineportal-pdf'),
             'rewrite' => array('slug' => 'department'),
             'hierarchical' => true,
             'show_in_rest' => true,
