@@ -91,7 +91,7 @@ if (!defined('ABSPATH')) {
                     <div class="filter-row">
                         <!-- ELC Filter -->
                         <div class="filter-group">
-                            <label><?php _e('elc', 'sunshineportal-pdf'); ?></label>
+                            <label><?php _e('ELC', 'sunshineportal-pdf'); ?></label>
                             <div class="filter-dropdown">
                                 <div class="dropdown-button" onclick="toggleDropdown('category')">
                                     <span id="categoryLabel"><?php _e('All ELCs', 'sunshineportal-pdf'); ?></span>

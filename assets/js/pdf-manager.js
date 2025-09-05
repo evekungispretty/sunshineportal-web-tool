@@ -1,17 +1,16 @@
 /**
- * SunshinePortal PDF Manager - 4-Step Flow JavaScript
+ * SunshinePortal PDF Manager - 4-Step Flow JavaScript (Single Selection Filters)
  * File: assets/js/pdf-manager.js
  */
 
 (function($) {
     'use strict';
 
-    // Global variables
     let currentStep = 1;
     let appliedFilters = {
-        category: [],
-        type: [],
-        department: [],
+        category: '', // Single value instead of array
+        type: '',     // Single value instead of array
+        department: '', // Single value instead of array
         search: ''
     };
     let allTaxonomies = {};
@@ -112,15 +111,15 @@
         $dropdown.toggleClass('show');
     };
 
-    // Clear individual filter
+    // Clear individual filter - MODIFIED for single selection
     window.clearFilter = function(filterType) {
-        appliedFilters[filterType] = [];
+        appliedFilters[filterType] = ''; // Clear single value
         updateFilterLabel(filterType);
         if (currentStep === 3) {
             filterPDFs();
         }
         
-        // Update checkboxes
+        // Update UI - remove selected class from all options
         $(`#${filterType}Dropdown .filter-option`).removeClass('selected');
         
         // Close dropdown
@@ -128,12 +127,12 @@
         $(`#${filterType}Dropdown`).siblings('.dropdown-button').removeClass('active');
     };
 
-    // Clear all filters
+    // Clear all filters - MODIFIED for single selection
     window.clearAllFilters = function() {
         appliedFilters = {
-            category: [],
-            type: [],
-            department: [],
+            category: '',
+            type: '',
+            department: '',
             search: ''
         };
         
@@ -204,7 +203,7 @@
                     .attr('data-value', term.slug)
                     .text(term.name)
                     .on('click', function() {
-                        toggleFilterOption(taxonomy, term.slug, term.name, $(this));
+                        selectFilterOption(taxonomy, term.slug, term.name, $(this));
                     });
                 
                 $container.append($option);
@@ -212,16 +211,18 @@
         });
     }
 
-    // Toggle filter option
-    function toggleFilterOption(filterType, value, label, $element) {
-        const index = appliedFilters[filterType].indexOf(value);
+    // MODIFIED: Select filter option (single selection)
+    function selectFilterOption(filterType, value, label, $element) {
+        // Remove selected class from all options in this filter type
+        $(`#${filterType}Dropdown .filter-option`).removeClass('selected');
         
-        if (index === -1) {
-            appliedFilters[filterType].push(value);
-            $element.addClass('selected');
+        // If clicking the same option that's already selected, clear it
+        if (appliedFilters[filterType] === value) {
+            appliedFilters[filterType] = '';
         } else {
-            appliedFilters[filterType].splice(index, 1);
-            $element.removeClass('selected');
+            // Set new selection
+            appliedFilters[filterType] = value;
+            $element.addClass('selected');
         }
         
         updateFilterLabel(filterType);
@@ -229,21 +230,29 @@
         if (currentStep === 3) {
             filterPDFs();
         }
+        
+        // Close dropdown after selection
+        $(`#${filterType}Dropdown`).removeClass('show');
+        $(`#${filterType}Dropdown`).siblings('.dropdown-button').removeClass('active');
     }
 
-    // Update filter label
+    // MODIFIED: Update filter label for single selection
     function updateFilterLabel(filterType) {
-        const count = appliedFilters[filterType].length;
+        const value = appliedFilters[filterType];
         const $label = $(`#${filterType}Label`);
         
-        if (count === 0) {
-            $label.text(`All ${capitalize(filterType)}s`);
-        } else if (count === 1) {
-            const value = appliedFilters[filterType][0];
+        if (!value) {
+            // No selection - show default text
+            const defaultTexts = {
+                category: 'All ELCs',
+                type: 'All Counties', 
+                department: 'All Years'
+            };
+            $label.text(defaultTexts[filterType] || `All ${capitalize(filterType)}s`);
+        } else {
+            // Show selected item name
             const term = findTermBySlug(filterType, value);
             $label.text(term ? term.name : value);
-        } else {
-            $label.text(`${count} ${capitalize(filterType)}s`);
         }
     }
 
@@ -258,23 +267,22 @@
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
-    // Load PDFs from API
+    // MODIFIED: Load PDFs from API with single filter values
     function loadPDFs() {
         $('#pdfGrid').html('<div class="loading">Loading PDF resources...</div>');
         $('#resultsCount').text('Loading...');
 
         const params = new URLSearchParams();
         
-        // Add filters to params
+        // Add filters to params - MODIFIED for single values
         if (appliedFilters.search) {
             params.append('search', appliedFilters.search);
         }
         
+        // Add single filter values (not arrays)
         ['category', 'type', 'department'].forEach(function(filterType) {
-            if (appliedFilters[filterType].length > 0) {
-                appliedFilters[filterType].forEach(function(value) {
-                    params.append(`${filterType}[]`, value);
-                });
+            if (appliedFilters[filterType]) {
+                params.append(`${filterType}[]`, appliedFilters[filterType]);
             }
         });
 
@@ -385,12 +393,12 @@
         $('#resultsCount').text(text);
     }
 
-    // Update applied filters display
+    // MODIFIED: Update applied filters display for single selections
     function updateAppliedFiltersDisplay() {
         const hasFilters = appliedFilters.search || 
-                          appliedFilters.category.length > 0 || 
-                          appliedFilters.type.length > 0 || 
-                          appliedFilters.department.length > 0;
+                          appliedFilters.category || 
+                          appliedFilters.type || 
+                          appliedFilters.department;
 
         const $container = $('#appliedFilters');
         
@@ -412,19 +420,19 @@
             `);
         }
 
-        // Add taxonomy tags
+        // Add taxonomy tags - MODIFIED for single values
         ['category', 'type', 'department'].forEach(function(filterType) {
-            appliedFilters[filterType].forEach(function(value) {
-                const term = findTermBySlug(filterType, value);
-                const label = term ? term.name : value;
+            if (appliedFilters[filterType]) {
+                const term = findTermBySlug(filterType, appliedFilters[filterType]);
+                const label = term ? term.name : appliedFilters[filterType];
                 
                 $tags.append(`
                     <span class="filter-tag">
                         ${capitalize(filterType)}: ${escapeHtml(label)}
-                        <span class="remove-tag" onclick="removeFilterTag('${filterType}', '${value}')">×</span>
+                        <span class="remove-tag" onclick="removeFilterTag('${filterType}')">×</span>
                     </span>
                 `);
-            });
+            }
         });
 
         $container.show();
@@ -439,19 +447,16 @@
         }
     };
 
-    // Remove filter tag
-    window.removeFilterTag = function(filterType, value) {
-        const index = appliedFilters[filterType].indexOf(value);
-        if (index !== -1) {
-            appliedFilters[filterType].splice(index, 1);
-            updateFilterLabel(filterType);
-            
-            // Update UI
-            $(`.filter-option[data-value="${value}"]`).removeClass('selected');
-            
-            if (currentStep === 3) {
-                filterPDFs();
-            }
+    // MODIFIED: Remove filter tag for single selection
+    window.removeFilterTag = function(filterType) {
+        appliedFilters[filterType] = '';
+        updateFilterLabel(filterType);
+        
+        // Update UI
+        $(`#${filterType}Dropdown .filter-option`).removeClass('selected');
+        
+        if (currentStep === 3) {
+            filterPDFs();
         }
     };
 
