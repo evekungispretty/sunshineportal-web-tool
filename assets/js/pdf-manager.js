@@ -1,5 +1,5 @@
 /**
- * SunshinePortal PDF Manager - 4-Step Flow JavaScript (Single Selection Filters)
+ * SunshinePortal PDF Manager - Complete Fixed Version with Single Selection
  * File: assets/js/pdf-manager.js
  */
 
@@ -27,6 +27,7 @@
         setupEventListeners();
         setupUploadHandlers();
         loadTaxonomies();
+        initializeFilters();
     }
 
     // Step navigation functions
@@ -111,7 +112,7 @@
         $dropdown.toggleClass('show');
     };
 
-    // Clear individual filter - MODIFIED for single selection
+    // FIXED: Clear individual filter - for single selection
     window.clearFilter = function(filterType) {
         appliedFilters[filterType] = ''; // Clear single value
         updateFilterLabel(filterType);
@@ -127,7 +128,7 @@
         $(`#${filterType}Dropdown`).siblings('.dropdown-button').removeClass('active');
     };
 
-    // Clear all filters - MODIFIED for single selection
+    // FIXED: Clear all filters - for single selection
     window.clearAllFilters = function() {
         appliedFilters = {
             category: '',
@@ -189,7 +190,7 @@
         });
     }
 
-    // Populate filter dropdowns
+    // FIXED: Populate filter dropdowns with single-selection behavior
     function populateFilterDropdowns() {
         Object.keys(allTaxonomies).forEach(function(taxonomy) {
             const terms = allTaxonomies[taxonomy];
@@ -201,17 +202,25 @@
                 const $option = $('<div>')
                     .addClass('filter-option')
                     .attr('data-value', term.slug)
+                    .attr('data-filter-type', taxonomy)
                     .text(term.name)
-                    .on('click', function() {
+                    .on('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
                         selectFilterOption(taxonomy, term.slug, term.name, $(this));
                     });
+                
+                // Check if this option is currently selected
+                if (appliedFilters[taxonomy] === term.slug) {
+                    $option.addClass('selected');
+                }
                 
                 $container.append($option);
             });
         });
     }
 
-    // MODIFIED: Select filter option (single selection)
+    // FIXED: Select filter option (single selection)
     function selectFilterOption(filterType, value, label, $element) {
         // Remove selected class from all options in this filter type
         $(`#${filterType}Dropdown .filter-option`).removeClass('selected');
@@ -236,7 +245,7 @@
         $(`#${filterType}Dropdown`).siblings('.dropdown-button').removeClass('active');
     }
 
-    // MODIFIED: Update filter label for single selection
+    // FIXED: Update filter label for single selection
     function updateFilterLabel(filterType) {
         const value = appliedFilters[filterType];
         const $label = $(`#${filterType}Label`);
@@ -249,10 +258,12 @@
                 department: 'All Years'
             };
             $label.text(defaultTexts[filterType] || `All ${capitalize(filterType)}s`);
+            $label.removeClass('has-selection');
         } else {
             // Show selected item name
             const term = findTermBySlug(filterType, value);
             $label.text(term ? term.name : value);
+            $label.addClass('has-selection');
         }
     }
 
@@ -267,14 +278,14 @@
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
-    // MODIFIED: Load PDFs from API with single filter values
+    // Load PDFs from API with single filter values
     function loadPDFs() {
         $('#pdfGrid').html('<div class="loading">Loading PDF resources...</div>');
         $('#resultsCount').text('Loading...');
 
         const params = new URLSearchParams();
         
-        // Add filters to params - MODIFIED for single values
+        // Add filters to params - for single values
         if (appliedFilters.search) {
             params.append('search', appliedFilters.search);
         }
@@ -393,7 +404,7 @@
         $('#resultsCount').text(text);
     }
 
-    // MODIFIED: Update applied filters display for single selections
+    // FIXED: Update applied filters display for single selections
     function updateAppliedFiltersDisplay() {
         const hasFilters = appliedFilters.search || 
                           appliedFilters.category || 
@@ -420,7 +431,7 @@
             `);
         }
 
-        // Add taxonomy tags - MODIFIED for single values
+        // Add taxonomy tags - for single values
         ['category', 'type', 'department'].forEach(function(filterType) {
             if (appliedFilters[filterType]) {
                 const term = findTermBySlug(filterType, appliedFilters[filterType]);
@@ -447,7 +458,7 @@
         }
     };
 
-    // MODIFIED: Remove filter tag for single selection
+    // FIXED: Remove filter tag for single selection
     window.removeFilterTag = function(filterType) {
         appliedFilters[filterType] = '';
         updateFilterLabel(filterType);
@@ -513,7 +524,7 @@
         }
     }
 
-    // Setup upload handlers - simplified for all users
+    // Setup upload handlers
     function setupUploadHandlers() {
         // Handle direct file upload for all users
         $(document).on('change', '#directPdfUpload', function(e) {
@@ -718,6 +729,36 @@
             }
         });
     };
+
+    // Add this initialization function to ensure proper setup
+    function initializeFilters() {
+        // Ensure single selection behavior on page load
+        $(document).on('click', '.filter-option', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const filterType = $(this).attr('data-filter-type');
+            const value = $(this).attr('data-value');
+            const label = $(this).text();
+            
+            if (filterType && value) {
+                selectFilterOption(filterType, value, label, $(this));
+            }
+        });
+        
+        // Prevent dropdown from closing when clicking inside
+        $(document).on('click', '.dropdown-content', function(e) {
+            e.stopPropagation();
+        });
+        
+        // Close dropdowns when clicking outside
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('.filter-dropdown').length) {
+                $('.dropdown-content').removeClass('show');
+                $('.dropdown-button').removeClass('active');
+            }
+        });
+    }
 
     // Utility functions
     function escapeHtml(text) {

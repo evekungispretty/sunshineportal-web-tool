@@ -232,9 +232,9 @@ if (!defined('ABSPATH')) {
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label><?php _e('Category *', 'sunshineportal-pdf'); ?></label>
+                            <label><?php _e('ELC *', 'sunshineportal-pdf'); ?></label>
                             <select name="category" required>
-                                <option value=""><?php _e('Select Category', 'sunshineportal-pdf'); ?></option>
+                                <option value=""><?php _e('Select ELC', 'sunshineportal-pdf'); ?></option>
                                 <?php
                                 $categories = get_terms(array(
                                     'taxonomy' => 'pdf_category', 
@@ -248,9 +248,9 @@ if (!defined('ABSPATH')) {
                         </div>
                         
                         <div class="form-group">
-                            <label><?php _e('Type *', 'sunshineportal-pdf'); ?></label>
+                            <label><?php _e('County *', 'sunshineportal-pdf'); ?></label>
                             <select name="type" required>
-                                <option value=""><?php _e('Select Type', 'sunshineportal-pdf'); ?></option>
+                                <option value=""><?php _e('Select County', 'sunshineportal-pdf'); ?></option>
                                 <?php
                                 $types = get_terms(array(
                                     'taxonomy' => 'pdf_type', 
@@ -264,9 +264,9 @@ if (!defined('ABSPATH')) {
                         </div>
                         
                         <div class="form-group">
-                            <label><?php _e('Department *', 'sunshineportal-pdf'); ?></label>
+                            <label><?php _e('Year *', 'sunshineportal-pdf'); ?></label>
                             <select name="department" required>
-                                <option value=""><?php _e('Select Department', 'sunshineportal-pdf'); ?></option>
+                                <option value=""><?php _e('Select Year', 'sunshineportal-pdf'); ?></option>
                                 <?php
                                 $departments = get_terms(array(
                                     'taxonomy' => 'pdf_department', 
@@ -339,13 +339,20 @@ if (!defined('ABSPATH')) {
             </div>
             <div class="modal-body">
                 <div class="instruction-step">
-                    <h4><?php _e('Step 1: Get Started', 'sunshineportal-pdf'); ?></h4>
+                    <h4><?php _e('Step 1: Select Your ELC', 'sunshineportal-pdf'); ?></h4>
                     <p><?php _e('Read the welcome information and click "Get Started" to begin browsing resources.', 'sunshineportal-pdf'); ?></p>
                 </div>
                 
                 <div class="instruction-step">
-                    <h4><?php _e('Step 2: Filter Resources', 'sunshineportal-pdf'); ?></h4>
+                    <h4><?php _e('Step 2: Review the CNA Report Segments', 'sunshineportal-pdf'); ?></h4>
                     <p><?php _e('Use the dropdown filters to narrow down resources by category, type, or department. You can also search by keywords. Leave filters empty to see all resources.', 'sunshineportal-pdf'); ?></p>
+                    <ul>
+                        <li>Segment A Demographics: population and demographic characteristics.</li>
+                        <li>Segment B Program Data: program-specific info (e.g., School Readiness, VPK).</li>
+                        <li>Segment C Indices & Insights: additional indices and analyses from ECPRG.</li>
+
+
+                    </ul>
                 </div>
                 
                 <div class="instruction-step">
@@ -355,7 +362,7 @@ if (!defined('ABSPATH')) {
                 
                 <div class="instruction-step">
                     <h4><?php _e('Step 4: Upload New Resources', 'sunshineportal-pdf'); ?></h4>
-                    <p><?php _e('Add new PDF resources by filling out the upload form. Choose appropriate categories, types, and departments to help others find your resources easily.', 'sunshineportal-pdf'); ?></p>
+                    <p><?php _e('Add new PDF resources by filling out the upload form. Choose appropriate tags to help others find your resources easily.', 'sunshineportal-pdf'); ?></p>
                 </div>
             </div>
         </div>
