@@ -1,5 +1,5 @@
 /**
- * SunshinePortal PDF Manager - Updated with 5 Steps and Filter Memory
+ * SunshinePortal PDF Manager - Updated with 6 Steps and Completion Page
  * File: assets/js/pdf-manager.js
  */
 
@@ -30,10 +30,10 @@
         initializeFilters();
     }
 
-    // Step navigation functions - Updated for 5 steps
+    // Step navigation functions - Updated for 6 steps
     window.goToStep = function(stepNumber) {
-        // Validate step number
-        if (stepNumber < 1 || stepNumber > 5) return;
+        // Validate step number - Updated to support 6 steps
+        if (stepNumber < 1 || stepNumber > 6) return;
 
         // Hide current step
         $('.step-content').hide();
@@ -44,8 +44,8 @@
         // Show target step
         $(`#content-step-${stepNumber}`).show();
         
-        // Update step indicators
-        for (let i = 1; i <= 5; i++) { // Updated to 5 steps
+        // Update step indicators - Updated to 6 steps
+        for (let i = 1; i <= 6; i++) {
             const $stepElement = $(`#step-${i}`);
             if (i < stepNumber) {
                 $stepElement.addClass('completed');
@@ -65,8 +65,34 @@
         } else if (stepNumber === 4 || stepNumber === 5) {
             // Pre-populate form fields with filter selections
             prePopulateUploadForm(stepNumber);
+        } else if (stepNumber === 6) {
+            // Handle completion step
+            handleCompletionStep();
         }
     };
+
+    // NEW: Handle completion step logic
+    function handleCompletionStep() {
+        // Add any completion-specific logic here
+        console.log('User reached completion step');
+        
+        // Optional: Reset filters for next use
+        // appliedFilters = {
+        //     category: '',
+        //     type: '',
+        //     department: '',
+        //     search: ''
+        // };
+        
+        // Optional: Clear any temporary data
+        // Could add analytics tracking here
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'completion', {
+                'event_category': 'pdf_manager',
+                'event_label': 'workflow_completed'
+            });
+        }
+    }
 
     // NEW: Pre-populate upload form with filter selections
     function prePopulateUploadForm(stepNumber) {
@@ -133,13 +159,11 @@
             }
             
             const message = `
-                <div class="filter-inheritance-message" style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 12px; margin-bottom: 20px; border-radius: 4px;">
+                <div class="filter-inheritance-message" style="background: #e3f2fd; padding: 12px; margin-bottom: 20px; border-radius: 4px;">
                     <p style="margin: 0; color: #1976d2;">
-                        <strong>📋 Pre-filled from your filters:</strong> ${inheritedItems.join(', ')}
+                        <strong>📋 Pre-filled from your previous step:</strong> ${inheritedItems.join(', ')}
                     </p>
-                    <p style="margin: 5px 0 0 0; font-size: 13px; color: #666;">
-                        You can change these selections if needed.
-                    </p>
+
                 </div>
             `;
             
@@ -752,7 +776,7 @@
         }, 3000);
     }
 
-    // UPDATED: Add PDF function (form submission) with segment parameter
+    // UPDATED: Add PDF function (form submission) with segment parameter - Updated to go to Step 6 after Segment E
     window.addPDF = function(event, segment) {
         event.preventDefault();
         
@@ -824,13 +848,13 @@
                         directUpload.value = '';
                     }
                     
-                    // Navigate based on segment
+                    // Navigate based on segment - UPDATED to go to Step 6 after Segment E
                     if (segment === 'segment-d') {
                         // Go to Segment E
                         goToStep(5);
                     } else {
-                        // Go back to start or browse
-                        goToStep(1);
+                        // Go to completion step (Step 6) after Segment E
+                        goToStep(6);
                     }
                 } else {
                     alert('Failed to create PDF resource: ' + (response.message || 'Unknown error'));

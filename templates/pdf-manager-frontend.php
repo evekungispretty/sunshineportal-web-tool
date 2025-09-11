@@ -34,6 +34,10 @@ if (!defined('ABSPATH')) {
                 <div class="step-number">5</div>
                 <div class="step-title"><?php _e('Upload Segment E', 'sunshineportal-pdf'); ?></div>
             </div>
+            <div class="step" id="step-6" data-step="6">
+                <div class="step-number">6</div>
+                <div class="step-title"><?php _e('Complete', 'sunshineportal-pdf'); ?></div>
+            </div>
         </div>
     </div>
 
@@ -217,7 +221,7 @@ if (!defined('ABSPATH')) {
                         <?php _e('Back to Filters', 'sunshineportal-pdf'); ?>
                     </button>
                     <button class="step-button step-button-primary" onclick="goToStep(4)">
-                        <?php _e('Upload Segment D', 'sunshineportal-pdf'); ?>
+                        <?php _e('Next Step', 'sunshineportal-pdf'); ?>
                     </button>
                 </div>
             </div>
@@ -227,7 +231,6 @@ if (!defined('ABSPATH')) {
         <div class="step-content" id="content-step-4" style="display: none;">
             <div class="upload-card">
                 <h3><?php _e('Upload Segment D — Community Resources', 'sunshineportal-pdf'); ?></h3>
-                <p><?php _e('Upload your Community Resources document. This segment should summarize resources and local feedback for your ELC area.', 'sunshineportal-pdf'); ?></p>
 
                 <form class="upload-form" onsubmit="addPDF(event, 'segment-d')">
                     <div class="form-group">
@@ -321,9 +324,7 @@ if (!defined('ABSPATH')) {
                         <button type="submit" class="step-button step-button-primary add-pdf-btn">
                             <?php _e('Upload Segment D', 'sunshineportal-pdf'); ?>
                         </button>
-                        <button type="button" class="step-button" onclick="goToStep(5)">
-                            <?php _e('Skip to Segment E', 'sunshineportal-pdf'); ?>
-                        </button>
+
                     </div>
                 </form>
             </div>
@@ -333,7 +334,6 @@ if (!defined('ABSPATH')) {
         <div class="step-content" id="content-step-5" style="display: none;">
             <div class="upload-card">
                 <h3><?php _e('Upload Segment E — Summary & Priorities', 'sunshineportal-pdf'); ?></h3>
-                <p><?php _e('Upload your Summary & Priorities document. This segment should provide an overall summary and priorities for the next period.', 'sunshineportal-pdf'); ?></p>
 
                 <form class="upload-form" onsubmit="addPDF(event, 'segment-e')">
                     <div class="form-group">
@@ -415,11 +415,20 @@ if (!defined('ABSPATH')) {
                         <button type="submit" class="step-button step-button-primary add-pdf-btn">
                             <?php _e('Upload Segment E', 'sunshineportal-pdf'); ?>
                         </button>
-                        <button type="button" class="step-button step-button-secondary" onclick="goToStep(1)">
-                            <?php _e('Complete Process', 'sunshineportal-pdf'); ?>
-                        </button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- Step 6: Complete-->
+        <div class="step-content" id="content-step-6" style="display: none;">
+            <div class="welcome-card">
+                <h3>Thank you for completing the process.</h3>
+                <p>Please feel free to start over if there's another document for you to review and upoload.</p>
+               
+                <button class="step-button step-button-primary" onclick="goToStep(1)">
+                    <?php _e('Start Over', 'sunshineportal-pdf'); ?>
+                </button>
             </div>
         </div>
     </div>
@@ -499,7 +508,7 @@ function goToStep(stepNumber) {
     document.getElementById(`content-step-${stepNumber}`).style.display = 'block';
     
     // Update step indicators
-    for (let i = 1; i <= 5; i++) { // Updated to 5 steps
+    for (let i = 1; i <= 6; i++) { // Updated to 6 steps
         const stepElement = document.getElementById(`step-${i}`);
         if (i < stepNumber) {
             stepElement.classList.add('completed');

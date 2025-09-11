@@ -25,9 +25,9 @@
 .steps-wrapper {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: top;
     position: relative;
-    max-width: 600px;
+    max-width: 1000px;
     margin: 0 auto;
 }
 
