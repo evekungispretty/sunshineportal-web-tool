@@ -73,17 +73,6 @@ if (!defined('ABSPATH')) {
                     </div>
                 </div>
 
-                <div class="welcome-instructions">
-                    <h4><?php _e('Getting Started:', 'sunshineportal-pdf'); ?></h4>
-                    <ol>
-                        <li><?php _e('Click "Get Started" to begin browsing resources', 'sunshineportal-pdf'); ?></li>
-                        <li><?php _e('Use filters to narrow down the resources you need', 'sunshineportal-pdf'); ?></li>
-                        <li><?php _e('Browse and download the PDFs that match your needs', 'sunshineportal-pdf'); ?></li>
-                        <li><?php _e('Upload Segment D - Community Resources', 'sunshineportal-pdf'); ?></li>
-                        <li><?php _e('Upload Segment E - Summary & Priorities', 'sunshineportal-pdf'); ?></li>
-                    </ol>
-                </div>
-
                 <button class="step-button step-button-primary" onclick="goToStep(2)">
                     <?php _e('Get Started', 'sunshineportal-pdf'); ?>
                 </button>
@@ -424,7 +413,7 @@ if (!defined('ABSPATH')) {
         <div class="step-content" id="content-step-6" style="display: none;">
             <div class="welcome-card">
                 <h3>Thank you for completing the process.</h3>
-                <p>Please feel free to start over if there's another document for you to review and upoload.</p>
+                <p>Please feel free to refresh your browser and start over if there's another document for you to review and upoload.</p>
                
                 <button class="step-button step-button-primary" onclick="goToStep(1)">
                     <?php _e('Start Over', 'sunshineportal-pdf'); ?>

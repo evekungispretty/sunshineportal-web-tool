@@ -1,6 +1,6 @@
 <?php
 /**
- * Admin meta box template for PDF Resource details
+ * Admin meta box template for PDF Resource details - Updated with Segment Display
  * File: templates/admin-meta-box.php
  */
 
@@ -16,6 +16,10 @@ if ($pdf_file_id) {
     $current_file_url = wp_get_attachment_url($pdf_file_id);
     $current_filename = basename(get_attached_file($pdf_file_id));
 }
+
+// Get current segments
+$current_segments = wp_get_post_terms(get_the_ID(), 'pdf_segment', array('fields' => 'names'));
+$segments_display = !empty($current_segments) && !is_wp_error($current_segments) ? implode(', ', $current_segments) : 'No segment assigned';
 ?>
 
 <table class="form-table" role="presentation">
@@ -71,6 +75,38 @@ if ($pdf_file_id) {
                 <p class="description">
                     <?php _e('Upload a PDF file from your media library. Only PDF files are allowed.', 'sunshineportal-pdf'); ?>
                 </p>
+            </td>
+        </tr>
+        
+        <!-- NEW: Document Segment Information -->
+        <tr>
+            <th scope="row">
+                <label><?php _e('Document Segment:', 'sunshineportal-pdf'); ?></label>
+            </th>
+            <td>
+                <div class="pdf-segment-info">
+                    <p>
+                        <strong><?php _e('Current Segment:', 'sunshineportal-pdf'); ?></strong> 
+                        <span style="color: #007cba; font-weight: bold; padding: 4px 8px; background: #f0f8ff; border-radius: 4px; border: 1px solid #007cba;">
+                            <?php echo esc_html($segments_display); ?>
+                        </span>
+                    </p>
+                </div>
+                
+                <p class="description">
+                    <?php _e('Document segments are automatically assigned for frontend uploads (D & E) or can be manually assigned using the Document Segment taxonomy box on this page. Use segments to organize documents by their content type:', 'sunshineportal-pdf'); ?>
+                </p>
+                
+                <div class="segment-legend" style="background: #f9f9f9; padding: 12px; border-radius: 4px; margin-top: 10px;">
+                    <strong><?php _e('Segment Reference:', 'sunshineportal-pdf'); ?></strong>
+                    <ul style="margin: 8px 0 0 20px; font-size: 13px; color: #666;">
+                        <li><strong>Segment A:</strong> Demographics - population and demographic characteristics</li>
+                        <li><strong>Segment B:</strong> Program Data - program-specific information (e.g., School Readiness, VPK)</li>
+                        <li><strong>Segment C:</strong> Indices & Insights - additional indices and analyses from ECPRG</li>
+                        <li><strong>Segment D:</strong> Community Resources - resource inventory and community feedback <em>(auto-assigned from frontend)</em></li>
+                        <li><strong>Segment E:</strong> Summary & Priorities - overall summary and priorities for next period <em>(auto-assigned from frontend)</em></li>
+                    </ul>
+                </div>
             </td>
         </tr>
         
@@ -202,6 +238,19 @@ if ($pdf_file_id) {
     border-radius: 4px;
     text-align: center;
     color: #666;
+}
+
+/* NEW: Segment styling */
+.pdf-segment-info {
+    margin-bottom: 10px;
+}
+
+.segment-legend {
+    border-left: 4px solid #007cba;
+}
+
+.segment-legend ul li {
+    margin-bottom: 4px;
 }
 </style>
 

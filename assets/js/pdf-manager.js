@@ -1,5 +1,5 @@
 /**
- * SunshinePortal PDF Manager - Updated with 6 Steps and Completion Page
+ * SunshinePortal PDF Manager - Updated with 6 Steps and Automatic Segment Assignment
  * File: assets/js/pdf-manager.js
  */
 
@@ -776,7 +776,7 @@
         }, 3000);
     }
 
-    // UPDATED: Add PDF function (form submission) with segment parameter - Updated to go to Step 6 after Segment E
+    // UPDATED: Add PDF function with automatic segment assignment
     window.addPDF = function(event, segment) {
         event.preventDefault();
         
@@ -810,14 +810,25 @@
             title = segmentPrefix + title;
         }
         
+        // NEW: Automatically assign segment based on which step we're on
+        var segmentValue;
+        if (segment === 'segment-d') {
+            segmentValue = 'segment-d'; // Will be mapped to "Segment D" term
+        } else if (segment === 'segment-e') {
+            segmentValue = 'segment-e'; // Will be mapped to "Segment E" term
+        }
+        
         var pdfData = {
             title: title,
             description: formData.get('description').trim(),
             category: [formData.get('category').trim()],
             type: [formData.get('type').trim()],
             department: [formData.get('department').trim()],
+            segment: segmentValue, // NEW: Add segment assignment
             pdf_file_id: pdfFileId.trim()
         };
+        
+        console.log('PDF Data being sent:', pdfData); // Debug log
         
         var $submitBtn = $(event.target).find('.add-pdf-btn');
         var originalText = $submitBtn.text();
@@ -858,6 +869,7 @@
                     }
                 } else {
                     alert('Failed to create PDF resource: ' + (response.message || 'Unknown error'));
+                    console.error('Server response:', response);
                 }
             },
             error: function(xhr, status, error) {

@@ -129,7 +129,7 @@
 }
 
 .welcome-features {
-    display: grid;
+    display: none;
     gap: 24px;
     margin: 30px 0;
 }

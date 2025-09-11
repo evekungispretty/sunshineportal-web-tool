@@ -3,7 +3,7 @@
  * Plugin Name: SunshinePortal PDF Tool
  * Plugin URI: education.ufl.edu
  * Description: A comprehensive PDF resource management tool with filtering and download tracking
- * Version: 2.0.1
+ * Version: 2.0.5
  * Author: Eve
  * License: GPL v2 or later
  * Text Domain: sunshineportal-pdf
@@ -177,6 +177,22 @@ class SunshinePortal_PDF_Manager {
             'show_in_rest' => true,
             'show_admin_column' => true,
         ));
+        
+        // NEW: Document Segments (A, B, C, D, E) - Admin only, not frontend-facing
+        register_taxonomy('pdf_segment', 'pdf_resource', array(
+            'label' => __('Document Segment', 'sunshineportal-pdf'),
+            'rewrite' => array('slug' => 'pdf-segment'),
+            'hierarchical' => true,
+            'show_in_rest' => true,
+            'show_admin_column' => true,
+            'public' => false, // Not public-facing
+            'show_ui' => true, // Show in admin
+            'show_in_menu' => true, // Show in admin menu
+            'show_in_nav_menus' => false, // Don't show in nav menus
+            'show_tagcloud' => false, // Don't show tag cloud
+            'show_in_quick_edit' => true,
+            'meta_box_cb' => 'post_categories_meta_box', // Use standard categories meta box style
+        ));
     }
     
     public function add_meta_boxes() {
@@ -247,6 +263,7 @@ class SunshinePortal_PDF_Manager {
                 'category' => array('type' => 'array'),
                 'type' => array('type' => 'array'),
                 'department' => array('type' => 'array'),
+                'segment' => array('type' => 'array'), // NEW: Add segment filtering for admin
                 'orderby' => array('type' => 'string', 'default' => 'date'),
                 'order' => array('type' => 'string', 'default' => 'DESC'),
             ),
@@ -307,7 +324,8 @@ class SunshinePortal_PDF_Manager {
         // Add taxonomy filters
         $tax_query = array();
         
-        foreach (['category', 'type', 'department'] as $tax) {
+        // Include segments in filtering (for admin use)
+        foreach (['category', 'type', 'department', 'segment'] as $tax) {
             if (!empty($params[$tax])) {
                 $tax_query[] = array(
                     'taxonomy' => 'pdf_' . $tax,
@@ -350,6 +368,7 @@ class SunshinePortal_PDF_Manager {
             $categories = wp_get_post_terms($post->ID, 'pdf_category', array('fields' => 'names'));
             $types = wp_get_post_terms($post->ID, 'pdf_type', array('fields' => 'names'));
             $departments = wp_get_post_terms($post->ID, 'pdf_department', array('fields' => 'names'));
+            $segments = wp_get_post_terms($post->ID, 'pdf_segment', array('fields' => 'names')); // NEW: Get segments
             
             $resources[] = array(
                 'id' => $post->ID,
@@ -360,6 +379,7 @@ class SunshinePortal_PDF_Manager {
                 'categories' => $categories,
                 'types' => $types,
                 'departments' => $departments,
+                'segments' => $segments, // NEW: Include segments in response
                 'download_count' => intval($download_count),
                 'file_size' => $file_size,
                 'date' => $post->post_date,
@@ -458,6 +478,30 @@ class SunshinePortal_PDF_Manager {
             }
         }
         
+        // NEW: Handle segment assignment - Auto-assign D or E based on frontend upload, or manual assignment
+        if (!empty($params['segment'])) {
+            if (is_array($params['segment'])) {
+                $term_ids = array();
+                foreach ($params['segment'] as $slug) {
+                    $term = get_term_by('slug', sanitize_text_field($slug), 'pdf_segment');
+                    if ($term) {
+                        $term_ids[] = $term->term_id;
+                    }
+                }
+                if (!empty($term_ids)) {
+                    $result = wp_set_post_terms($post_id, $term_ids, 'pdf_segment');
+                    error_log('Segment assignment result: ' . print_r($result, true));
+                }
+            } else {
+                // Single segment value
+                $term = get_term_by('slug', sanitize_text_field($params['segment']), 'pdf_segment');
+                if ($term) {
+                    $result = wp_set_post_terms($post_id, array($term->term_id), 'pdf_segment');
+                    error_log('Single segment assignment result: ' . print_r($result, true));
+                }
+            }
+        }
+        
         // Handle file upload if provided
         if (!empty($params['pdf_file_id'])) {
             update_post_meta($post_id, '_pdf_file_id', intval($params['pdf_file_id']));
@@ -478,6 +522,7 @@ class SunshinePortal_PDF_Manager {
         $assigned_categories = wp_get_post_terms($post_id, 'pdf_category', array('fields' => 'slugs'));
         $assigned_types = wp_get_post_terms($post_id, 'pdf_type', array('fields' => 'slugs'));
         $assigned_departments = wp_get_post_terms($post_id, 'pdf_department', array('fields' => 'slugs'));
+        $assigned_segments = wp_get_post_terms($post_id, 'pdf_segment', array('fields' => 'slugs')); // NEW
         
         return rest_ensure_response(array(
             'success' => true,
@@ -487,7 +532,8 @@ class SunshinePortal_PDF_Manager {
                 'received_params' => $params,
                 'assigned_categories' => $assigned_categories,
                 'assigned_types' => $assigned_types,
-                'assigned_departments' => $assigned_departments
+                'assigned_departments' => $assigned_departments,
+                'assigned_segments' => $assigned_segments // NEW
             )
         ));
     }
@@ -590,6 +636,7 @@ class SunshinePortal_PDF_Manager {
     public function get_taxonomies_api($request) {
         $taxonomies = array();
         
+        // Don't include segments in frontend API response - keep it admin-only
         foreach (['pdf_category', 'pdf_type', 'pdf_department'] as $taxonomy) {
             $terms = get_terms(array(
                 'taxonomy' => $taxonomy,
@@ -614,6 +661,7 @@ class SunshinePortal_PDF_Manager {
         $new_columns['cb'] = $columns['cb'];
         $new_columns['title'] = $columns['title'];
         $new_columns['pdf_file'] = __('PDF File', 'sunshineportal-pdf');
+        $new_columns['pdf_segment'] = __('Segment', 'sunshineportal-pdf'); // NEW: Add segment column
         $new_columns['download_count'] = __('Downloads', 'sunshineportal-pdf');
         $new_columns['file_size'] = __('File Size', 'sunshineportal-pdf');
         $new_columns['date'] = $columns['date'];
@@ -630,6 +678,15 @@ class SunshinePortal_PDF_Manager {
                     echo '<a href="' . esc_url($file_url) . '" target="_blank">' . __('View PDF', 'sunshineportal-pdf') . '</a>';
                 } else {
                     echo __('No file', 'sunshineportal-pdf');
+                }
+                break;
+                
+            case 'pdf_segment': // NEW: Display segments
+                $segments = wp_get_post_terms($post_id, 'pdf_segment', array('fields' => 'names'));
+                if (!empty($segments) && !is_wp_error($segments)) {
+                    echo esc_html(implode(', ', $segments));
+                } else {
+                    echo '<span style="color: #999;">' . __('No segment', 'sunshineportal-pdf') . '</span>';
                 }
                 break;
                 
@@ -668,7 +725,8 @@ function sunshineportal_pdf_activate() {
     $default_terms = array(
         'pdf_category' => array('Documentation', 'Tutorial', 'Template', 'Report', 'Guide'),
         'pdf_type' => array('Beginner', 'Intermediate', 'Advanced', 'Reference'),
-        'pdf_department' => array('Marketing', 'Development', 'Design', 'Human Resources', 'Sales')
+        'pdf_department' => array('Marketing', 'Development', 'Design', 'Human Resources', 'Sales'),
+        'pdf_segment' => array('Segment A', 'Segment B', 'Segment C', 'Segment D', 'Segment E') // NEW: Add default segments
     );
     
     foreach ($default_terms as $taxonomy => $terms) {
