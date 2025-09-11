@@ -39,8 +39,8 @@ if (!defined('ABSPATH')) {
         <!-- Step 1: Start/Welcome -->
         <div class="step-content" id="content-step-1" style="display: block;">
             <div class="welcome-card">
-                <h3><?php _e('PDF Resource Manager', 'sunshineportal-pdf'); ?></h3>
                 <p>Welcome to the Community Needs Assessment (CNA) Web Tool, developed by the University of Florida’s Anita Zucker Center for Excellence in Early Childhood Studies, Early Childhood Policy Research Group (ECPRG). This tool provides a standardized template to help Florida’s Early Learning Coalitions (ELCs) prepare their annual Community Needs Assessment. These pre-populated reports are designed to meet Florida’s statutory requirements while also incorporating indices and insights from program data and ECPRG's research.</p>
+                <p><i>Please note: The template reports are not final. Each ELC must review, update, and complete the reports before submission.</i></p>
                 <div class="welcome-features">
                     <div class="feature-item">
                         <span class="dashicons dashicons-search"></span>
@@ -347,23 +347,23 @@ if (!defined('ABSPATH')) {
                     <h4><?php _e('Step 2: Review the CNA Report Segments', 'sunshineportal-pdf'); ?></h4>
                     <p><?php _e('Use the dropdown filters to narrow down resources by category, type, or department. You can also search by keywords. Leave filters empty to see all resources.', 'sunshineportal-pdf'); ?></p>
                     <ul>
-                        <li>Segment A Demographics: population and demographic characteristics.</li>
-                        <li>Segment B Program Data: program-specific info (e.g., School Readiness, VPK).</li>
-                        <li>Segment C Indices & Insights: additional indices and analyses from ECPRG.</li>
+                        <li><strong>Segment A</strong> Demographics: population and demographic characteristics.</li>
+                        <li><strong>Segment B</strong> Program Data: program-specific info (e.g., School Readiness, VPK).</li>
+                        <li><strong>Segment C </strong>Indices & Insights: additional indices and analyses from ECPRG.</li>
 
 
                     </ul>
                 </div>
                 
                 <div class="instruction-step">
-                    <h4><?php _e('Step 3: Browse & Download', 'sunshineportal-pdf'); ?></h4>
-                    <p><?php _e('Review the filtered results and click on PDFs to preview them. Use the download button to save resources to your device. You can sort results by date, title, or popularity.', 'sunshineportal-pdf'); ?></p>
+                    <h4><?php _e('Step 3: Complete Additional Required Sections', 'sunshineportal-pdf'); ?></h4>
+                    <ul>
+                        <li><strong>Segment D</strong> Community Resources & Feedback: summarize resources and local feedback.</li>
+                        <li><strong>Segment E </strong> Summary & Priorities: provide an overall summary and priorities for the next period. A fillable template for Segment E is available at the provided link.</li>
+                    </ul>
                 </div>
                 
-                <div class="instruction-step">
-                    <h4><?php _e('Step 4: Upload New Resources', 'sunshineportal-pdf'); ?></h4>
-                    <p><?php _e('Add new PDF resources by filling out the upload form. Choose appropriate tags to help others find your resources easily.', 'sunshineportal-pdf'); ?></p>
-                </div>
+            
             </div>
         </div>
     </div>
