@@ -1,5 +1,5 @@
 /**
- * SunshinePortal PDF Manager - Complete Fixed Version with Single Selection
+ * SunshinePortal PDF Manager - Updated with 5 Steps and Filter Memory
  * File: assets/js/pdf-manager.js
  */
 
@@ -30,10 +30,10 @@
         initializeFilters();
     }
 
-    // Step navigation functions
+    // Step navigation functions - Updated for 5 steps
     window.goToStep = function(stepNumber) {
         // Validate step number
-        if (stepNumber < 1 || stepNumber > 4) return;
+        if (stepNumber < 1 || stepNumber > 5) return;
 
         // Hide current step
         $('.step-content').hide();
@@ -45,7 +45,7 @@
         $(`#content-step-${stepNumber}`).show();
         
         // Update step indicators
-        for (let i = 1; i <= 4; i++) {
+        for (let i = 1; i <= 5; i++) { // Updated to 5 steps
             const $stepElement = $(`#step-${i}`);
             if (i < stepNumber) {
                 $stepElement.addClass('completed');
@@ -62,8 +62,90 @@
         } else if (stepNumber === 3) {
             loadPDFs();
             updateAppliedFiltersDisplay();
+        } else if (stepNumber === 4 || stepNumber === 5) {
+            // Pre-populate form fields with filter selections
+            prePopulateUploadForm(stepNumber);
         }
     };
+
+    // NEW: Pre-populate upload form with filter selections
+    function prePopulateUploadForm(stepNumber) {
+        const prefix = stepNumber === 4 ? 'segmentD' : 'segmentE';
+        
+        // Wait a moment for the DOM to be ready
+        setTimeout(function() {
+            // Pre-select category (ELC)
+            if (appliedFilters.category) {
+                const $categorySelect = $(`#${prefix}-category`);
+                if ($categorySelect.length) {
+                    $categorySelect.val(appliedFilters.category);
+                    console.log(`Pre-selected ${prefix} category:`, appliedFilters.category);
+                }
+            }
+            
+            // Pre-select type (County)
+            if (appliedFilters.type) {
+                const $typeSelect = $(`#${prefix}-type`);
+                if ($typeSelect.length) {
+                    $typeSelect.val(appliedFilters.type);
+                    console.log(`Pre-selected ${prefix} type:`, appliedFilters.type);
+                }
+            }
+            
+            // Pre-select department (Year)
+            if (appliedFilters.department) {
+                const $departmentSelect = $(`#${prefix}-department`);
+                if ($departmentSelect.length) {
+                    $departmentSelect.val(appliedFilters.department);
+                    console.log(`Pre-selected ${prefix} department:`, appliedFilters.department);
+                }
+            }
+            
+            // Show filter inheritance message
+            showFilterInheritanceMessage(stepNumber);
+        }, 100);
+    }
+
+    // NEW: Show message about inherited filters
+    function showFilterInheritanceMessage(stepNumber) {
+        const hasInheritedFilters = appliedFilters.category || appliedFilters.type || appliedFilters.department;
+        
+        if (hasInheritedFilters) {
+            const prefix = stepNumber === 4 ? 'segmentD' : 'segmentE';
+            const $form = $(`#content-step-${stepNumber} .upload-form`);
+            
+            // Remove any existing message
+            $form.find('.filter-inheritance-message').remove();
+            
+            // Add inheritance message
+            const inheritedItems = [];
+            if (appliedFilters.category) {
+                const term = findTermBySlug('category', appliedFilters.category);
+                inheritedItems.push(`ELC: ${term ? term.name : appliedFilters.category}`);
+            }
+            if (appliedFilters.type) {
+                const term = findTermBySlug('type', appliedFilters.type);
+                inheritedItems.push(`County: ${term ? term.name : appliedFilters.type}`);
+            }
+            if (appliedFilters.department) {
+                const term = findTermBySlug('department', appliedFilters.department);
+                inheritedItems.push(`Year: ${term ? term.name : appliedFilters.department}`);
+            }
+            
+            const message = `
+                <div class="filter-inheritance-message" style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 12px; margin-bottom: 20px; border-radius: 4px;">
+                    <p style="margin: 0; color: #1976d2;">
+                        <strong>📋 Pre-filled from your filters:</strong> ${inheritedItems.join(', ')}
+                    </p>
+                    <p style="margin: 5px 0 0 0; font-size: 13px; color: #666;">
+                        You can change these selections if needed.
+                    </p>
+                </div>
+            `;
+            
+            $form.prepend(message);
+        }
+    }
 
     // Setup all event listeners
     function setupEventListeners() {
@@ -112,7 +194,7 @@
         $dropdown.toggleClass('show');
     };
 
-    // FIXED: Clear individual filter - for single selection
+    // Clear individual filter - for single selection
     window.clearFilter = function(filterType) {
         appliedFilters[filterType] = ''; // Clear single value
         updateFilterLabel(filterType);
@@ -128,7 +210,7 @@
         $(`#${filterType}Dropdown`).siblings('.dropdown-button').removeClass('active');
     };
 
-    // FIXED: Clear all filters - for single selection
+    // Clear all filters - for single selection
     window.clearAllFilters = function() {
         appliedFilters = {
             category: '',
@@ -190,7 +272,7 @@
         });
     }
 
-    // FIXED: Populate filter dropdowns with single-selection behavior
+    // Populate filter dropdowns with single-selection behavior
     function populateFilterDropdowns() {
         Object.keys(allTaxonomies).forEach(function(taxonomy) {
             const terms = allTaxonomies[taxonomy];
@@ -220,7 +302,7 @@
         });
     }
 
-    // FIXED: Select filter option (single selection)
+    // Select filter option (single selection)
     function selectFilterOption(filterType, value, label, $element) {
         // Remove selected class from all options in this filter type
         $(`#${filterType}Dropdown .filter-option`).removeClass('selected');
@@ -245,7 +327,7 @@
         $(`#${filterType}Dropdown`).siblings('.dropdown-button').removeClass('active');
     }
 
-    // FIXED: Update filter label for single selection
+    // Update filter label for single selection
     function updateFilterLabel(filterType) {
         const value = appliedFilters[filterType];
         const $label = $(`#${filterType}Label`);
@@ -404,7 +486,7 @@
         $('#resultsCount').text(text);
     }
 
-    // FIXED: Update applied filters display for single selections
+    // Update applied filters display for single selections
     function updateAppliedFiltersDisplay() {
         const hasFilters = appliedFilters.search || 
                           appliedFilters.category || 
@@ -458,7 +540,7 @@
         }
     };
 
-    // FIXED: Remove filter tag for single selection
+    // Remove filter tag for single selection
     window.removeFilterTag = function(filterType) {
         appliedFilters[filterType] = '';
         updateFilterLabel(filterType);
@@ -488,7 +570,7 @@
             success: function(response) {
                 if (response.success) {
                     // Open download URL
-                    window.location.href = response.download_url;
+                    window.open(response.download_url, '_blank');
                     
                     // Update download count in UI
                     updateDownloadCount(pdfId, response.new_count);
@@ -499,7 +581,7 @@
                 // Still allow download
                 const pdf = filteredPDFs.find(p => p.id === pdfId);
                 if (pdf) {
-                    window.location.href = pdf.url;
+                    window.open(pdf.url, '_blank');
                 }
             }
         });
@@ -524,57 +606,76 @@
         }
     }
 
-    // Setup upload handlers
+    // UPDATED: Setup upload handlers for both segments
     function setupUploadHandlers() {
-        // Handle direct file upload for all users
-        $(document).on('change', '#directPdfUpload', function(e) {
-            var file = e.target.files[0];
-            
-            if (!file) return;
-            
-            if (file.type !== 'application/pdf') {
-                alert('Please select a PDF file only.');
-                $(this).val('');
-                return;
-            }
-            
-            if (file.size > 10 * 1024 * 1024) {
-                alert('File size must be less than 10MB.');
-                $(this).val('');
-                return;
-            }
-            
-            showUploadProgress(file.name);
-            uploadPdfFile(file);
+        // Handle direct file upload for Segment D
+        $(document).on('change', '#segmentD-directPdfUpload', function(e) {
+            handleFileUpload(e, 'segmentD');
         });
         
-        // Handle remove PDF file button
-        $(document).on('click', '#removePdfBtn', function(e) {
+        // Handle direct file upload for Segment E
+        $(document).on('change', '#segmentE-directPdfUpload', function(e) {
+            handleFileUpload(e, 'segmentE');
+        });
+        
+        // Handle remove PDF file buttons
+        $(document).on('click', '#segmentD-removePdfBtn', function(e) {
             e.preventDefault();
-            
-            $('#pdfFileId').val('');
-            $('#directPdfUpload').val('');
-            $('#pdfPreview').html('');
-            $(this).hide();
-            
-            showRemoveMessage();
+            handleFileRemoval('segmentD');
+        });
+        
+        $(document).on('click', '#segmentE-removePdfBtn', function(e) {
+            e.preventDefault();
+            handleFileRemoval('segmentE');
         });
     }
 
-    // Upload progress display
-    function showUploadProgress(filename) {
-        $('#pdfPreview').html(`
+    // NEW: Handle file upload for specific segment
+    function handleFileUpload(e, segment) {
+        var file = e.target.files[0];
+        
+        if (!file) return;
+        
+        if (file.type !== 'application/pdf') {
+            alert('Please select a PDF file only.');
+            $(e.target).val('');
+            return;
+        }
+        
+        if (file.size > 10 * 1024 * 1024) {
+            alert('File size must be less than 10MB.');
+            $(e.target).val('');
+            return;
+        }
+        
+        showUploadProgress(file.name, segment);
+        uploadPdfFile(file, segment);
+    }
+
+    // NEW: Handle file removal for specific segment
+    function handleFileRemoval(segment) {
+        $(`#${segment}-pdfFileId`).val('');
+        $(`#${segment}-directPdfUpload`).val('');
+        $(`#${segment}-pdfPreview`).html('');
+        $(`#${segment}-removePdfBtn`).hide();
+        
+        showRemoveMessage(segment);
+    }
+
+    // UPDATED: Upload progress display for specific segment
+    function showUploadProgress(filename, segment) {
+        $(`#${segment}-pdfPreview`).html(`
             <div style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 4px; border-left: 4px solid #ffc107;">
                 <p style="margin: 0;"><strong>Uploading: ${escapeHtml(filename)}</strong></p>
                 <div style="width: 100%; background: #e9ecef; border-radius: 4px; margin-top: 5px;">
-                    <div id="uploadProgress" style="width: 0%; height: 4px; background: #007cba; border-radius: 4px; transition: width 0.3s;"></div>
+                    <div id="${segment}-uploadProgress" style="width: 0%; height: 4px; background: #007cba; border-radius: 4px; transition: width 0.3s;"></div>
                 </div>
             </div>
         `);
     }
 
-    // Upload PDF file
-    function uploadPdfFile(file) {
+    // UPDATED: Upload PDF file for specific segment
+    function uploadPdfFile(file, segment) {
         var formData = new FormData();
         formData.append('pdf_file', file);
         
@@ -592,16 +693,16 @@
                 xhr.upload.addEventListener('progress', function(e) {
                     if (e.lengthComputable) {
                         var percentComplete = (e.loaded / e.total) * 100;
-                        $('#uploadProgress').css('width', percentComplete + '%');
+                        $(`#${segment}-uploadProgress`).css('width', percentComplete + '%');
                     }
                 }, false);
                 return xhr;
             },
             success: function(response) {
                 if (response.success) {
-                    $('#pdfFileId').val(response.file_id);
+                    $(`#${segment}-pdfFileId`).val(response.file_id);
                     
-                    $('#pdfPreview').html(`
+                    $(`#${segment}-pdfPreview`).html(`
                         <div style="background: #f0f8ff; padding: 10px; border-radius: 4px; border-left: 4px solid #007cba;">
                             <p style="margin: 0;"><strong>Uploaded File:</strong></p>
                             <p style="margin: 5px 0 0 0;">
@@ -615,7 +716,7 @@
                         </div>
                     `);
                     
-                    $('#removePdfBtn').show();
+                    $(`#${segment}-removePdfBtn`).show();
                 } else {
                     alert('Upload failed: ' + (response.message || 'Unknown error'));
                 }
@@ -636,23 +737,23 @@
         });
     }
 
-    // Remove message helper  
-    function showRemoveMessage() {
-        $('#pdfPreview').html(`
+    // UPDATED: Remove message helper for specific segment
+    function showRemoveMessage(segment) {
+        $(`#${segment}-pdfPreview`).html(`
             <div style="background: #f8d7da; color: #721c24; padding: 8px; border-radius: 4px; margin-top: 10px;">
                 ✓ File removed successfully!
             </div>
         `);
         
         setTimeout(function() {
-            $('#pdfPreview').fadeOut(function() {
+            $(`#${segment}-pdfPreview`).fadeOut(function() {
                 $(this).html('').show();
             });
         }, 3000);
     }
 
-    // Add PDF function (form submission)
-    window.addPDF = function(event) {
+    // UPDATED: Add PDF function (form submission) with segment parameter
+    window.addPDF = function(event, segment) {
         event.preventDefault();
         
         var formData = new FormData(event.target);
@@ -678,8 +779,15 @@
             return;
         }
         
+        // Add segment identifier to title if not already present
+        var title = formData.get('title').trim();
+        var segmentPrefix = segment === 'segment-d' ? 'Segment D - ' : 'Segment E - ';
+        if (!title.toLowerCase().includes(segment.replace('-', ' '))) {
+            title = segmentPrefix + title;
+        }
+        
         var pdfData = {
-            title: formData.get('title').trim(),
+            title: title,
             description: formData.get('description').trim(),
             category: [formData.get('category').trim()],
             type: [formData.get('type').trim()],
@@ -701,21 +809,29 @@
             },
             success: function(response) {
                 if (response.success) {
-                    alert('PDF resource added successfully!');
+                    var segmentName = segment === 'segment-d' ? 'Segment D' : 'Segment E';
+                    alert(`${segmentName} uploaded successfully!`);
                     
                     // Reset form
                     event.target.reset();
-                    $('#pdfFileId').val('');
-                    $('#pdfPreview').html('');
-                    $('#removePdfBtn').hide();
+                    var prefix = segment === 'segment-d' ? 'segmentD' : 'segmentE';
+                    $(`#${prefix}-pdfFileId`).val('');
+                    $(`#${prefix}-pdfPreview`).html('');
+                    $(`#${prefix}-removePdfBtn`).hide();
                     
-                    var directUpload = document.getElementById('directPdfUpload');
+                    var directUpload = document.getElementById(`${prefix}-directPdfUpload`);
                     if (directUpload) {
                         directUpload.value = '';
                     }
                     
-                    // Go back to browse step and reload PDFs
-                    goToStep(3);
+                    // Navigate based on segment
+                    if (segment === 'segment-d') {
+                        // Go to Segment E
+                        goToStep(5);
+                    } else {
+                        // Go back to start or browse
+                        goToStep(1);
+                    }
                 } else {
                     alert('Failed to create PDF resource: ' + (response.message || 'Unknown error'));
                 }
@@ -730,7 +846,7 @@
         });
     };
 
-    // Add this initialization function to ensure proper setup
+    // Initialize filters functionality
     function initializeFilters() {
         // Ensure single selection behavior on page load
         $(document).on('click', '.filter-option', function(e) {

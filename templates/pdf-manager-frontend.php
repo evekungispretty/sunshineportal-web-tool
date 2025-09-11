@@ -1,6 +1,6 @@
 <?php
 /**
- * Frontend template for SunshinePortal PDF Manager
+ * Frontend template for SunshinePortal PDF Manager - Updated with 5 Steps
  * File: templates/pdf-manager-frontend.php
  */
 
@@ -28,7 +28,11 @@ if (!defined('ABSPATH')) {
             </div>
             <div class="step" id="step-4" data-step="4">
                 <div class="step-number">4</div>
-                <div class="step-title"><?php _e('Upload Resources', 'sunshineportal-pdf'); ?></div>
+                <div class="step-title"><?php _e('Upload Segment D', 'sunshineportal-pdf'); ?></div>
+            </div>
+            <div class="step" id="step-5" data-step="5">
+                <div class="step-number">5</div>
+                <div class="step-title"><?php _e('Upload Segment E', 'sunshineportal-pdf'); ?></div>
             </div>
         </div>
     </div>
@@ -39,7 +43,7 @@ if (!defined('ABSPATH')) {
         <!-- Step 1: Start/Welcome -->
         <div class="step-content" id="content-step-1" style="display: block;">
             <div class="welcome-card">
-                <p>Welcome to the Community Needs Assessment (CNA) Web Tool, developed by the University of Florida’s Anita Zucker Center for Excellence in Early Childhood Studies, Early Childhood Policy Research Group (ECPRG). This tool provides a standardized template to help Florida’s Early Learning Coalitions (ELCs) prepare their annual Community Needs Assessment. These pre-populated reports are designed to meet Florida’s statutory requirements while also incorporating indices and insights from program data and ECPRG's research.</p>
+                <p>Welcome to the Community Needs Assessment (CNA) Web Tool, developed by the University of Florida's Anita Zucker Center for Excellence in Early Childhood Studies, Early Childhood Policy Research Group (ECPRG). This tool provides a standardized template to help Florida's Early Learning Coalitions (ELCs) prepare their annual Community Needs Assessment. These pre-populated reports are designed to meet Florida's statutory requirements while also incorporating indices and insights from program data and ECPRG's research.</p>
                 <p><i>Please note: The template reports are not final. Each ELC must review, update, and complete the reports before submission.</i></p>
                 <div class="welcome-features">
                     <div class="feature-item">
@@ -59,8 +63,8 @@ if (!defined('ABSPATH')) {
                     <div class="feature-item">
                         <span class="dashicons dashicons-upload"></span>
                         <div>
-                            <h4><?php _e('Upload & Share', 'sunshineportal-pdf'); ?></h4>
-                            <p><?php _e('Add new PDF resources and organize them for others to use.', 'sunshineportal-pdf'); ?></p>
+                            <h4><?php _e('Upload Segments', 'sunshineportal-pdf'); ?></h4>
+                            <p><?php _e('Upload both required segments: Community Resources and Summary & Priorities.', 'sunshineportal-pdf'); ?></p>
                         </div>
                     </div>
                 </div>
@@ -71,7 +75,8 @@ if (!defined('ABSPATH')) {
                         <li><?php _e('Click "Get Started" to begin browsing resources', 'sunshineportal-pdf'); ?></li>
                         <li><?php _e('Use filters to narrow down the resources you need', 'sunshineportal-pdf'); ?></li>
                         <li><?php _e('Browse and download the PDFs that match your needs', 'sunshineportal-pdf'); ?></li>
-                        <li><?php _e('Upload new resources to share with others', 'sunshineportal-pdf'); ?></li>
+                        <li><?php _e('Upload Segment D - Community Resources', 'sunshineportal-pdf'); ?></li>
+                        <li><?php _e('Upload Segment E - Summary & Priorities', 'sunshineportal-pdf'); ?></li>
                     </ol>
                 </div>
 
@@ -85,7 +90,7 @@ if (!defined('ABSPATH')) {
         <div class="step-content" id="content-step-2" style="display: none;">
             <div class="filter-card">
                 <h3><?php _e('Filter PDF Resources', 'sunshineportal-pdf'); ?></h3>
-                <p><?php _e('Use the filters below to find the specific resources you need. You can combine multiple filters or leave them all empty to see all available resources.', 'sunshineportal-pdf'); ?></p>
+                <p><?php _e('Use the filters below to find the specific resources you need. Your selections will be remembered for the upload steps. You can combine multiple filters or leave them all empty to see all available resources.', 'sunshineportal-pdf'); ?></p>
 
                 <div class="filters-container">
                     <div class="filter-row">
@@ -212,28 +217,28 @@ if (!defined('ABSPATH')) {
                         <?php _e('Back to Filters', 'sunshineportal-pdf'); ?>
                     </button>
                     <button class="step-button step-button-primary" onclick="goToStep(4)">
-                        <?php _e('Upload New Resource', 'sunshineportal-pdf'); ?>
+                        <?php _e('Upload Segment D', 'sunshineportal-pdf'); ?>
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Step 4: Upload -->
+        <!-- Step 4: Upload Segment D — Community Resources -->
         <div class="step-content" id="content-step-4" style="display: none;">
             <div class="upload-card">
-                <h3><?php _e('Upload New PDF Resource', 'sunshineportal-pdf'); ?></h3>
-                <p><?php _e('Add a new PDF resource to share with others. Fill out the form below and upload your PDF file.', 'sunshineportal-pdf'); ?></p>
+                <h3><?php _e('Upload Segment D — Community Resources', 'sunshineportal-pdf'); ?></h3>
+                <p><?php _e('Upload your Community Resources document. This segment should summarize resources and local feedback for your ELC area.', 'sunshineportal-pdf'); ?></p>
 
-                <form class="upload-form" onsubmit="addPDF(event)">
+                <form class="upload-form" onsubmit="addPDF(event, 'segment-d')">
                     <div class="form-group">
                         <label><?php _e('Title *', 'sunshineportal-pdf'); ?></label>
-                        <input type="text" name="title" required placeholder="<?php _e('Enter a descriptive title for your PDF', 'sunshineportal-pdf'); ?>">
+                        <input type="text" name="title" required placeholder="<?php _e('e.g., Community Resources - [ELC Name] - [Year]', 'sunshineportal-pdf'); ?>">
                     </div>
                     
                     <div class="form-row">
                         <div class="form-group">
                             <label><?php _e('ELC *', 'sunshineportal-pdf'); ?></label>
-                            <select name="category" required>
+                            <select name="category" id="segmentD-category" required>
                                 <option value=""><?php _e('Select ELC', 'sunshineportal-pdf'); ?></option>
                                 <?php
                                 $categories = get_terms(array(
@@ -249,7 +254,7 @@ if (!defined('ABSPATH')) {
                         
                         <div class="form-group">
                             <label><?php _e('County *', 'sunshineportal-pdf'); ?></label>
-                            <select name="type" required>
+                            <select name="type" id="segmentD-type" required>
                                 <option value=""><?php _e('Select County', 'sunshineportal-pdf'); ?></option>
                                 <?php
                                 $types = get_terms(array(
@@ -265,7 +270,7 @@ if (!defined('ABSPATH')) {
                         
                         <div class="form-group">
                             <label><?php _e('Year *', 'sunshineportal-pdf'); ?></label>
-                            <select name="department" required>
+                            <select name="department" id="segmentD-department" required>
                                 <option value=""><?php _e('Select Year', 'sunshineportal-pdf'); ?></option>
                                 <?php
                                 $departments = get_terms(array(
@@ -282,30 +287,30 @@ if (!defined('ABSPATH')) {
                     
                     <div class="form-group">
                         <label><?php _e('Description', 'sunshineportal-pdf'); ?></label>
-                        <textarea name="description" rows="3" placeholder="<?php _e('Brief description of the PDF resource (optional)', 'sunshineportal-pdf'); ?>"></textarea>
+                        <textarea name="description" rows="3" placeholder="<?php _e('Community Resources segment for [ELC Name] - includes resource inventory and community feedback', 'sunshineportal-pdf'); ?>"></textarea>
                     </div>
                     
                     <div class="form-group">
-                        <label><?php _e('PDF File *', 'sunshineportal-pdf'); ?></label>
-                        <input type="hidden" name="pdf_file_id" id="pdfFileId">
+                        <label><?php _e('Segment D PDF File *', 'sunshineportal-pdf'); ?></label>
+                        <input type="hidden" name="pdf_file_id" id="segmentD-pdfFileId">
                         
                         <div class="pdf-upload-controls">
                             <input type="file" 
-                                   id="directPdfUpload" 
+                                   id="segmentD-directPdfUpload" 
                                    accept=".pdf,application/pdf" 
                                    style="display: none;">
-                            <button type="button" class="upload-pdf-btn" onclick="document.getElementById('directPdfUpload').click();">
-                                <?php _e('Choose PDF File', 'sunshineportal-pdf'); ?>
+                            <button type="button" class="upload-pdf-btn" onclick="document.getElementById('segmentD-directPdfUpload').click();">
+                                <?php _e('Choose Segment D PDF', 'sunshineportal-pdf'); ?>
                             </button>
-                            <button type="button" class="remove-pdf-btn" id="removePdfBtn" style="display: none;">
+                            <button type="button" class="remove-pdf-btn" id="segmentD-removePdfBtn" style="display: none;">
                                 <?php _e('Remove File', 'sunshineportal-pdf'); ?>
                             </button>
                         </div>
                         
-                        <div id="pdfPreview"></div>
+                        <div id="segmentD-pdfPreview"></div>
                         
                         <p class="description">
-                            <?php _e('Select a PDF file from your computer (max 10MB). Only PDF files are allowed.', 'sunshineportal-pdf'); ?>
+                            <?php _e('Select your Community Resources PDF file (max 10MB). Only PDF files are allowed.', 'sunshineportal-pdf'); ?>
                         </p>
                     </div>
                     
@@ -314,7 +319,104 @@ if (!defined('ABSPATH')) {
                             <?php _e('Back to Browse', 'sunshineportal-pdf'); ?>
                         </button>
                         <button type="submit" class="step-button step-button-primary add-pdf-btn">
-                            <?php _e('Upload PDF Resource', 'sunshineportal-pdf'); ?>
+                            <?php _e('Upload Segment D', 'sunshineportal-pdf'); ?>
+                        </button>
+                        <button type="button" class="step-button" onclick="goToStep(5)">
+                            <?php _e('Skip to Segment E', 'sunshineportal-pdf'); ?>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Step 5: Upload Segment E — Summary & Priorities -->
+        <div class="step-content" id="content-step-5" style="display: none;">
+            <div class="upload-card">
+                <h3><?php _e('Upload Segment E — Summary & Priorities', 'sunshineportal-pdf'); ?></h3>
+                <p><?php _e('Upload your Summary & Priorities document. This segment should provide an overall summary and priorities for the next period.', 'sunshineportal-pdf'); ?></p>
+
+                <form class="upload-form" onsubmit="addPDF(event, 'segment-e')">
+                    <div class="form-group">
+                        <label><?php _e('Title *', 'sunshineportal-pdf'); ?></label>
+                        <input type="text" name="title" required placeholder="<?php _e('e.g., Summary & Priorities - [ELC Name] - [Year]', 'sunshineportal-pdf'); ?>">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><?php _e('ELC *', 'sunshineportal-pdf'); ?></label>
+                            <select name="category" id="segmentE-category" required>
+                                <option value=""><?php _e('Select ELC', 'sunshineportal-pdf'); ?></option>
+                                <?php
+                                foreach ($categories as $category) {
+                                    echo '<option value="' . esc_attr($category->slug) . '">' . esc_html($category->name) . '</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label><?php _e('County *', 'sunshineportal-pdf'); ?></label>
+                            <select name="type" id="segmentE-type" required>
+                                <option value=""><?php _e('Select County', 'sunshineportal-pdf'); ?></option>
+                                <?php
+                                foreach ($types as $type) {
+                                    echo '<option value="' . esc_attr($type->slug) . '">' . esc_html($type->name) . '</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label><?php _e('Year *', 'sunshineportal-pdf'); ?></label>
+                            <select name="department" id="segmentE-department" required>
+                                <option value=""><?php _e('Select Year', 'sunshineportal-pdf'); ?></option>
+                                <?php
+                                foreach ($departments as $department) {
+                                    echo '<option value="' . esc_attr($department->slug) . '">' . esc_html($department->name) . '</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><?php _e('Description', 'sunshineportal-pdf'); ?></label>
+                        <textarea name="description" rows="3" placeholder="<?php _e('Summary & Priorities segment for [ELC Name] - includes overall summary and priorities for next period', 'sunshineportal-pdf'); ?>"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><?php _e('Segment E PDF File *', 'sunshineportal-pdf'); ?></label>
+                        <input type="hidden" name="pdf_file_id" id="segmentE-pdfFileId">
+                        
+                        <div class="pdf-upload-controls">
+                            <input type="file" 
+                                   id="segmentE-directPdfUpload" 
+                                   accept=".pdf,application/pdf" 
+                                   style="display: none;">
+                            <button type="button" class="upload-pdf-btn" onclick="document.getElementById('segmentE-directPdfUpload').click();">
+                                <?php _e('Choose Segment E PDF', 'sunshineportal-pdf'); ?>
+                            </button>
+                            <button type="button" class="remove-pdf-btn" id="segmentE-removePdfBtn" style="display: none;">
+                                <?php _e('Remove File', 'sunshineportal-pdf'); ?>
+                            </button>
+                        </div>
+                        
+                        <div id="segmentE-pdfPreview"></div>
+                        
+                        <p class="description">
+                            <?php _e('Select your Summary & Priorities PDF file (max 10MB). Only PDF files are allowed.', 'sunshineportal-pdf'); ?>
+                        </p>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="step-button" onclick="goToStep(4)">
+                            <?php _e('Back to Segment D', 'sunshineportal-pdf'); ?>
+                        </button>
+                        <button type="submit" class="step-button step-button-primary add-pdf-btn">
+                            <?php _e('Upload Segment E', 'sunshineportal-pdf'); ?>
+                        </button>
+                        <button type="button" class="step-button step-button-secondary" onclick="goToStep(1)">
+                            <?php _e('Complete Process', 'sunshineportal-pdf'); ?>
                         </button>
                     </div>
                 </form>
@@ -345,25 +447,27 @@ if (!defined('ABSPATH')) {
                 
                 <div class="instruction-step">
                     <h4><?php _e('Step 2: Review the CNA Report Segments', 'sunshineportal-pdf'); ?></h4>
-                    <p><?php _e('Use the dropdown filters to narrow down resources by category, type, or department. You can also search by keywords. Leave filters empty to see all resources.', 'sunshineportal-pdf'); ?></p>
+                    <p><?php _e('Use the dropdown filters to narrow down resources by category, type, or department. Your selections will be remembered for the upload steps.', 'sunshineportal-pdf'); ?></p>
                     <ul>
                         <li><strong>Segment A</strong> Demographics: population and demographic characteristics.</li>
                         <li><strong>Segment B</strong> Program Data: program-specific info (e.g., School Readiness, VPK).</li>
                         <li><strong>Segment C </strong>Indices & Insights: additional indices and analyses from ECPRG.</li>
-
-
                     </ul>
                 </div>
                 
                 <div class="instruction-step">
-                    <h4><?php _e('Step 3: Complete Additional Required Sections', 'sunshineportal-pdf'); ?></h4>
-                    <ul>
-                        <li><strong>Segment D</strong> Community Resources & Feedback: summarize resources and local feedback.</li>
-                        <li><strong>Segment E </strong> Summary & Priorities: provide an overall summary and priorities for the next period. A fillable template for Segment E is available at the provided link.</li>
-                    </ul>
+                    <h4><?php _e('Step 3: Browse and Download', 'sunshineportal-pdf'); ?></h4>
+                    <p><?php _e('Review available resources and download the templates you need.', 'sunshineportal-pdf'); ?></p>
                 </div>
-                
-            
+
+                <div class="instruction-step">
+                    <h4><?php _e('Step 4 & 5: Upload Required Segments', 'sunshineportal-pdf'); ?></h4>
+                    <ul>
+                        <li><strong>Segment D</strong> Community Resources: summarize resources and local feedback.</li>
+                        <li><strong>Segment E </strong> Summary & Priorities: provide an overall summary and priorities for the next period.</li>
+                    </ul>
+                    <p><?php _e('Both segments are required for completion. Your filter selections from Step 2 will be pre-filled to match your ELC area.', 'sunshineportal-pdf'); ?></p>
+                </div>
             </div>
         </div>
     </div>
@@ -373,9 +477,9 @@ if (!defined('ABSPATH')) {
 // Global variables for step management
 let currentStep = 1;
 let appliedFilters = {
-    category: [],
-    type: [],
-    department: [],
+    category: '',
+    type: '',
+    department: '',
     search: ''
 };
 
@@ -395,7 +499,7 @@ function goToStep(stepNumber) {
     document.getElementById(`content-step-${stepNumber}`).style.display = 'block';
     
     // Update step indicators
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 5; i++) { // Updated to 5 steps
         const stepElement = document.getElementById(`step-${i}`);
         if (i < stepNumber) {
             stepElement.classList.add('completed');
@@ -412,6 +516,38 @@ function goToStep(stepNumber) {
     } else if (stepNumber === 3) {
         loadPDFs();
         updateAppliedFiltersDisplay();
+    } else if (stepNumber === 4 || stepNumber === 5) {
+        // Pre-populate form fields with filter selections
+        prePopulateUploadForm(stepNumber);
+    }
+}
+
+// Pre-populate upload form with filter selections
+function prePopulateUploadForm(stepNumber) {
+    const prefix = stepNumber === 4 ? 'segmentD' : 'segmentE';
+    
+    // Pre-select category (ELC)
+    if (appliedFilters.category) {
+        const categorySelect = document.getElementById(`${prefix}-category`);
+        if (categorySelect) {
+            categorySelect.value = appliedFilters.category;
+        }
+    }
+    
+    // Pre-select type (County)
+    if (appliedFilters.type) {
+        const typeSelect = document.getElementById(`${prefix}-type`);
+        if (typeSelect) {
+            typeSelect.value = appliedFilters.type;
+        }
+    }
+    
+    // Pre-select department (Year)
+    if (appliedFilters.department) {
+        const departmentSelect = document.getElementById(`${prefix}-department`);
+        if (departmentSelect) {
+            departmentSelect.value = appliedFilters.department;
+        }
     }
 }
 
