@@ -3,7 +3,7 @@
  * Plugin Name: SunshinePortal PDF Tool
  * Plugin URI: education.ufl.edu
  * Description: A comprehensive PDF resource management tool with filtering and download tracking
- * Version: 2.0.5
+ * Version: 2.0.6
  * Author: Eve
  * License: GPL v2 or later
  * Text Domain: sunshineportal-pdf
@@ -323,6 +323,16 @@ class SunshinePortal_PDF_Manager {
         
         // Add taxonomy filters
         $tax_query = array();
+        
+        // NEW: Template-only filtering for frontend browsing (show only segments A, B, C)
+        if (!empty($params['template_only']) && $params['template_only'] === 'true') {
+            $tax_query[] = array(
+                'taxonomy' => 'pdf_segment',
+                'field' => 'slug',
+                'terms' => array('segment-a', 'segment-b', 'segment-c'),
+                'operator' => 'IN',
+            );
+        }
         
         // Include segments in filtering (for admin use)
         foreach (['category', 'type', 'department', 'segment'] as $tax) {

@@ -38,6 +38,7 @@ if (!defined('ABSPATH')) {
                 <div class="step-number">6</div>
                 <div class="step-title"><?php _e('Complete', 'sunshineportal-pdf'); ?></div>
             </div>
+
         </div>
     </div>
 
@@ -260,7 +261,7 @@ if (!defined('ABSPATH')) {
                             </select>
                         </div>
                         
-                        <div class="form-group">
+                        <div class="form-group group123">
                             <label><?php _e('Year *', 'sunshineportal-pdf'); ?></label>
                             <select name="department" id="segmentD-department" required>
                                 <option value=""><?php _e('Select Year', 'sunshineportal-pdf'); ?></option>

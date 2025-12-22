@@ -391,6 +391,11 @@
 
         const params = new URLSearchParams();
         
+        // NEW: Add template_only parameter for steps 2-3 to show only segments A, B, C
+        if (currentStep === 2 || currentStep === 3) {
+            params.append('template_only', 'true');
+        }
+        
         // Add filters to params - for single values
         if (appliedFilters.search) {
             params.append('search', appliedFilters.search);
@@ -483,7 +488,7 @@
                     
                     <div class="pdf-stats">
                         <span>Size: ${escapeHtml(fileSize)}</span>
-                        <span>Downloads: ${downloadCount}</span>
+                        <span style="padding-left: 10px;">Downloads: ${downloadCount}</span>
                     </div>
                     
                     ${pdf.description ? `<p class="pdf-description">${escapeHtml(pdf.description)}</p>` : ''}
@@ -513,9 +518,9 @@
     // Update applied filters display for single selections
     function updateAppliedFiltersDisplay() {
         const hasFilters = appliedFilters.search || 
-                          appliedFilters.category || 
-                          appliedFilters.type || 
-                          appliedFilters.department;
+                        appliedFilters.category || 
+                        appliedFilters.type || 
+                        appliedFilters.department;
 
         const $container = $('#appliedFilters');
         
@@ -537,15 +542,23 @@
             `);
         }
 
+        // Create display name mapping
+        const displayNames = {
+            category: 'ELC',
+            type: 'County', 
+            department: 'Year'
+        };
+
         // Add taxonomy tags - for single values
         ['category', 'type', 'department'].forEach(function(filterType) {
             if (appliedFilters[filterType]) {
                 const term = findTermBySlug(filterType, appliedFilters[filterType]);
                 const label = term ? term.name : appliedFilters[filterType];
+                const displayName = displayNames[filterType] || capitalize(filterType);
                 
                 $tags.append(`
                     <span class="filter-tag">
-                        ${capitalize(filterType)}: ${escapeHtml(label)}
+                        ${displayName}: ${escapeHtml(label)}
                         <span class="remove-tag" onclick="removeFilterTag('${filterType}')">×</span>
                     </span>
                 `);
